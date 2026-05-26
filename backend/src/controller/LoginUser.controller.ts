@@ -7,11 +7,14 @@ dotenv.config();
 
 export default async function LoginUser(req: Request, res: Response) {
   try {
+    console.log(process.env.JWT_SECRET);
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(401).json({ message: "please enter credentials" });
     }
-    const checkExistingUser = await UserModel.findOne({ email });
+    const checkExistingUser = await UserModel.findOne({ email }).select(
+      "+password",
+    );
 
     if (!checkExistingUser) {
       return res
@@ -28,7 +31,7 @@ export default async function LoginUser(req: Request, res: Response) {
       email: checkExistingUser.email,
     };
     /* Session implmentation  */
-    console.log(process.env.JWR_SECRET);
+    console.log(process.env.JWT_SECRET);
     const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
       expiresIn: "7d",
     });
@@ -45,6 +48,10 @@ export default async function LoginUser(req: Request, res: Response) {
 
     return res.status(200).json({ message: "Succesfully Logged in" });
   } catch (error) {
-    return res.status(400).json({ message: "somthing went wrong" });
+    console.error("Login error:", error);
+    return res.status(500).json({
+      message: "somthing went wrong",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 }
