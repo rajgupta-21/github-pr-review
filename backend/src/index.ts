@@ -7,6 +7,7 @@ import express from "express";
 import { Dbconnect } from "./db/db";
 import LoginRoute from "./routes/login.route";
 import RegisterRoute from "./routes/register.route";
+import sessionRoute from "./routes/session.route";
 const app = express();
 Dbconnect();
 
@@ -34,6 +35,10 @@ app.use("/auth", RegisterRoute);
 Login Route 
 **/
 app.use("/auth", LoginRoute);
+/* 
+session route
+*/
+app.use("/auth", sessionRoute);
 
 /** 
 health route
