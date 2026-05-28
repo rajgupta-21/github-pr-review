@@ -11,7 +11,7 @@ export function Navigation() {
   return (
     <div
       className="
-        bg-white/40
+        bg-white/20
         flex
         flex-col
         lg:flex-row

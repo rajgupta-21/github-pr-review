@@ -4,11 +4,11 @@ import HeroDisplay from "@/app/components/heroDisplay";
 
 const HomePage = () => {
   return (
-    <div className="flex flex-col">
-      <div className="flex bg-red-300">
+    <div className="flex flex-col gap-24 ">
+      <div className="flex">
         {/*Hero section*/}
 
-        <div className="bg-blue-300">
+        <div className="p-16">
           <HeroDisplay />
         </div>
         {/* Heilighted overview of features */}
@@ -17,7 +17,7 @@ const HomePage = () => {
         </div>
       </div>
       {/*Footer*/}
-      <div className="bg-yellow-300">
+      <div className="flex ">
         {/*Footer pending*/}
         <FooterDisplay />
       </div>

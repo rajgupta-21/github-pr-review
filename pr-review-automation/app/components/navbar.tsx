@@ -1,12 +1,6 @@
 import Link from "next/link";
+import { navitems } from "../constants/page";
 const Navbar = () => {
-  const navitems = [
-    { page: "Home", href: "/home" },
-    { page: "Features", href: "/home" },
-    { page: "How it works", href: "/home" },
-    { page: "About", href: "/home" },
-    { page: "Pricing", href: "/home" },
-  ];
   return (
     <div>
       <div className="flex gap-10">
