@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { Code2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DynamicButton } from "./button";
 import Navbar from "./navbar";
@@ -28,7 +28,9 @@ export function Navigation() {
       "
     >
       <div className="flex items-center gap-4 w-full lg:w-auto justify-center lg:justify-start">
-        <Image src="/favicon.ico" alt="image" width={40} height={40} />
+        <div className="bg-[#4017e3]/10 p-3 rounded-lg">
+          <Code2 color="darkblue" />
+        </div>
 
         <div className="flex-col text-center lg:text-left">
           <h1 className="font-bold">PR Automate</h1>

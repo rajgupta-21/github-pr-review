@@ -12,7 +12,7 @@ export default function MainLayout({
 
         <div className="w-full h-px bg-gray-300" />
 
-        <div className="flex-1 p-2 bg-white/30 mt-2 ">{children}</div>
+        <div className="flex-1 p-2 bg-white/30 mt-4 ">{children}</div>
       </div>
     </div>
   );

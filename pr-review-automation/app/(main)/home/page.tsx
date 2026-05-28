@@ -4,7 +4,7 @@ import HeroDisplay from "@/app/components/heroDisplay";
 
 const HomePage = () => {
   return (
-    <div className="flex flex-col gap-24 ">
+    <div className="flex flex-col  ">
       <div className="flex">
         {/*Hero section*/}
 
@@ -12,7 +12,7 @@ const HomePage = () => {
           <HeroDisplay />
         </div>
         {/* Heilighted overview of features */}
-        <div className="bg-green-300">
+        <div className="p-5 pt-4">
           <FeatureOverview />
         </div>
       </div>

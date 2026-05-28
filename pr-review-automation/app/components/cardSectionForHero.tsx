@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { cardItems } from "../constants/page";
 
 const CardSectionForHero = () => {
@@ -8,13 +7,14 @@ const CardSectionForHero = () => {
         return (
           <div className="w-60 flex items-center gap-4" key={items.id}>
             <div className="p-2 bg-blue-600/20 rounded-md ">
-              <Image
+              {/* <Image
                 className=""
                 src={items.image}
                 width={20}
                 height={20}
                 alt="image"
-              />
+              /> */}
+              {items.image}
             </div>
 
             <div className="flex flex-col">

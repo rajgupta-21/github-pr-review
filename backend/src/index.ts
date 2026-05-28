@@ -6,6 +6,7 @@ import cors from "cors";
 import express from "express";
 import { Dbconnect } from "./db/db";
 import LoginRoute from "./routes/login.route";
+import logoutRoute from "./routes/logout.route";
 import RegisterRoute from "./routes/register.route";
 import sessionRoute from "./routes/session.route";
 const app = express();
@@ -39,7 +40,10 @@ app.use("/auth", LoginRoute);
 session route
 */
 app.use("/auth", sessionRoute);
-
+/*
+Logout Route
+*/
+app.use("/auth", logoutRoute);
 /** 
 health route
 **/

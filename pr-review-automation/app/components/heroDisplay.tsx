@@ -1,7 +1,6 @@
 "use client";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { DynamicButton } from "./button";
 import CardSectionForHero from "./cardSectionForHero";
 
 const HeroDisplay = () => {
@@ -21,7 +20,7 @@ const HeroDisplay = () => {
         </span>
         <div className="flex gap-2">
           <span className="text-black/80 font-bold text-5xl">Reviews with</span>
-          <span className=" font-bold text-5xl text-[#4017e3]">AI</span>
+          <span className=" font-bold text-5xl text-[#4017e3]/90">AI</span>
         </div>
       </div>
       {/*content for hero section*/}
@@ -34,16 +33,22 @@ const HeroDisplay = () => {
         </span>
       </div>
       {/* Buttons */}
-      <div className="">
-        <DynamicButton
-          className="p-7 bg-[#4017e3]/90   hover:bg-[#4017e3] rounded-lg"
+      <div className="relative overflow-hidden rounded-xl cursor-pointer group w-fit ">
+        {/* animated background */}
+        <div
+          className="absolute inset-0 w-0 bg-[#4017e3]/90 transition-all duration-500 ease-out group-hover:w-full
+    "
+        />
+
+        {/* button content */}
+        <button
           onClick={() => {
             router.push("/register");
           }}
+          className="relative z-10 px-5 py-3 border border-[#4017e3] text-[#4017e3] font-semibold rounded-xl transition-colors cursor-pointer duration-300 group-hover:text-white"
         >
-          {" "}
-          Get started
-        </DynamicButton>
+          Get Started
+        </button>
       </div>
       {/*Card section for hero */}
       <div className="">
