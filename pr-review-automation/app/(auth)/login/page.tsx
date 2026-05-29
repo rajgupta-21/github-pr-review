@@ -13,7 +13,9 @@ const LoginPage = () => {
   const [loginError, setLoginError] = useState<boolean>(false);
 
   const [loading, setLoading] = useState<boolean>(false);
-
+  const login = () => {
+    window.location.href = "http://localhost:4000/auth/github";
+  };
   const handleSubmit = async () => {
     try {
       setLoading(true);
@@ -255,6 +257,9 @@ const LoginPage = () => {
                 transition-all
                 cursor-pointer
               "
+              onClick={() => {
+                login();
+              }}
             >
               <ArrowBigDown className="w-5 h-5" />
               Continue with GitHub

@@ -1,0 +1,96 @@
+import axios from "axios";
+import dotenv from "dotenv";
+import { Router } from "express";
+import { GithubUser } from "../schema/githubUser.schema";
+import GenerateToken from "../utils/jwtSign.util";
+dotenv.config();
+
+const router = Router();
+
+router.get("/github", async (req, res) => {
+  const githubUrl =
+    `https://github.com/login/oauth/authorize` +
+    `?client_id=${process.env.GITHUB_CLIENT_ID}` +
+    `&scope=read:user user:email repo`;
+
+  res.redirect(githubUrl);
+});
+
+router.get("/github/callback", async (req, res) => {
+  try {
+    const code = req.query.code as string;
+
+    if (!code) {
+      return res.status(400).json({
+        message: "No code provided",
+      });
+    }
+
+    // Exchange code for access token
+    const tokenResponse = await axios.post(
+      "https://github.com/login/oauth/access_token",
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      },
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
+    // Fetch GitHub user
+    const githubUser = await axios.get("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const user = githubUser.data;
+
+    let existingUser = await GithubUser.findOne({
+      githubId: user.id.toString(),
+    });
+
+    // REGISTER
+    if (!existingUser) {
+      existingUser = await GithubUser.create({
+        githubId: user.id.toString(),
+
+        email: user.email,
+
+        username: user.login,
+
+        avatarUrl: user.avatar_url,
+
+        access_token: accessToken,
+      });
+    } else {
+      existingUser.access_token = accessToken;
+
+      await existingUser.save();
+    }
+
+    const jwtToken = GenerateToken(existingUser._id.toString());
+
+    res.cookie("token", jwtToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    res.redirect("http://localhost:3000/home");
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "OAuth failed",
+    });
+  }
+});
+
+export default router;

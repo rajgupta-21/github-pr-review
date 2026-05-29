@@ -11,6 +11,9 @@ const RegisterPage = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [registerError, setRegisterError] = useState<boolean>(false);
+  const login = () => {
+    window.location.href = "http://localhost:4000/auth/github";
+  };
 
   const handleSubmit = async () => {
     try {
@@ -270,6 +273,9 @@ const RegisterPage = () => {
               transition-all
               cursor-pointer
             "
+              onClick={() => {
+                login();
+              }}
             >
               <ArrowBigDown className="w-5 h-5" />
               Continue with GitHub
