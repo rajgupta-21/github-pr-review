@@ -101,7 +101,7 @@ export const cardItems = [
   },
 ];
 export const navitems = [
-  { page: "Home", href: "/home" },
+  { page: "Home", href: "/" },
   { page: "Features", href: "/home" },
   { page: "How it works", href: "/home" },
   { page: "About", href: "/home" },

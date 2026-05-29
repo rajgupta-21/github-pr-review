@@ -14,7 +14,7 @@ export default async function MainLayout({
   const response = await fetch("http://localhost:4000/auth/me", {
     method: "GET",
     headers: {
-      Cookies: `token=${token.value}`,
+      Cookie: `token=${token.value}`,
     },
     cache: "no-store",
   });
@@ -22,6 +22,8 @@ export default async function MainLayout({
   if (!response.ok) {
     redirect("/login");
   }
+  const data = await response.json();
+  console.log("reponse from something url", data);
   return (
     <div
       className="min-h-screen bg-white text-black font-mono

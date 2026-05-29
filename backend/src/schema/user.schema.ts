@@ -1,28 +1,21 @@
-import mongoose, { InferSchemaType } from "mongoose";
+import mongoose, { InferSchemaType, Model } from "mongoose";
 
-const userSchema = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Username is required"],
       trim: true,
-      minlength: [3, "Username must be at least 3 characters"],
-      maxlength: [30, "Username cannot exceed 30 characters"],
     },
 
     email: {
       type: String,
-      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
     },
 
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: [6, "Password must be at least 6 characters"],
       select: false,
     },
 
@@ -30,6 +23,29 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+
+    githubConnected: {
+      type: Boolean,
+      default: false,
+    },
+
+    githubId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    githubUsername: {
+      type: String,
+    },
+
+    githubAvatarUrl: {
+      type: String,
+    },
+
+    githubAccessToken: {
+      type: String,
     },
 
     isVerified: {
@@ -46,7 +62,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
-export type UserType = InferSchemaType<typeof userSchema>;
-
-export const UserModel = mongoose.model("User", userSchema);
+export type UserType = InferSchemaType<typeof UserSchema>;
+export const UserModel: Model<UserType> =
+  mongoose.models.User || mongoose.model("User", UserSchema);

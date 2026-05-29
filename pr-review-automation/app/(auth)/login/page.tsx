@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowBigDown, Sparkles } from "lucide-react";
+import { ArrowBigDown, Cat, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -39,7 +39,7 @@ const LoginPage = () => {
       setLoading(false);
 
       if (response.status === 200) {
-        router.push("/home");
+        router.push("/dashboard");
       } else {
         setLoginError(true);
       }
@@ -261,7 +261,7 @@ const LoginPage = () => {
                 login();
               }}
             >
-              <ArrowBigDown className="w-5 h-5" />
+              <Cat className="w-5 h-5" />
               Continue with GitHub
             </button>
 

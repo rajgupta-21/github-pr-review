@@ -1,7 +1,7 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import { Router } from "express";
-import { GithubUser } from "../schema/githubUser.schema";
+import { UserModel } from "../schema/user.schema";
 import GenerateToken from "../utils/jwtSign.util";
 dotenv.config();
 
@@ -26,7 +26,6 @@ router.get("/github/callback", async (req, res) => {
       });
     }
 
-    // Exchange code for access token
     const tokenResponse = await axios.post(
       "https://github.com/login/oauth/access_token",
       {
@@ -51,23 +50,25 @@ router.get("/github/callback", async (req, res) => {
     });
 
     const user = githubUser.data;
+    console.log(user);
 
-    let existingUser = await GithubUser.findOne({
+    let existingUser = await UserModel.findOne({
       githubId: user.id.toString(),
     });
 
-    // REGISTER
     if (!existingUser) {
-      existingUser = await GithubUser.create({
-        githubId: user.id.toString(),
-
+      existingUser = await UserModel.create({
         email: user.email,
 
-        username: user.login,
+        githubConnected: true,
 
-        avatarUrl: user.avatar_url,
+        githubId: user.id.toString(),
 
-        access_token: accessToken,
+        githubUsername: user.login,
+
+        githubAvatarUrl: user.avatar_url,
+
+        githubAccessToken: accessToken,
       });
     } else {
       existingUser.access_token = accessToken;
@@ -75,7 +76,10 @@ router.get("/github/callback", async (req, res) => {
       await existingUser.save();
     }
 
-    const jwtToken = GenerateToken(existingUser._id.toString());
+    const jwtToken = GenerateToken({
+      id: existingUser._id.toString(),
+      email: existingUser.email,
+    });
 
     res.cookie("token", jwtToken, {
       httpOnly: true,
@@ -83,7 +87,7 @@ router.get("/github/callback", async (req, res) => {
       sameSite: "lax",
     });
 
-    res.redirect("http://localhost:3000/home");
+    res.redirect("http://localhost:3000/dashboard");
   } catch (error) {
     console.log(error);
 
