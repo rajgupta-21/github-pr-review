@@ -6,7 +6,7 @@ const FooterDisplay = () => {
       {footeritems.map((items) => {
         return (
           <div className=" flex items-center gap-6" key={items.id}>
-            <div className="p-2 bg-blue-600/20 rounded-md">
+            <div className="p-2 bg-[#4017e3]/20 rounded-md">
               {/* <Image
                 className=""
                 src={items.image}

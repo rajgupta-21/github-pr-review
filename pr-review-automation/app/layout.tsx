@@ -32,7 +32,7 @@ export default function RootLayout({
         antialiased
       `}
     >
-      <body className="min-h-screen font-mono">{children}</body>
+      <body className="min-h-screen font-mono ">{children}</body>
     </html>
   );
 }

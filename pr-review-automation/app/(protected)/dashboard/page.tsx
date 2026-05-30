@@ -1,26 +1,19 @@
-"use client";
-import { useEffect } from "react";
+import RecentActivity from "./components/ActivityItem";
+import DashboardHeader from "./components/DashboardHeader";
+import DashboardStats from "./components/DashboardStats";
+import RecentWorkflows from "./components/WorkflowCard";
 
-const HomePage = () => {
-  const handleUser = async () => {
-    try {
-      const response = await fetch("http://localhost:4000/auth/me", {
-        method: "GET",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Unauthorized");
-      }
-      const data = await response.json();
-      console.log(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  useEffect(() => {
-    handleUser();
-  }, []);
-  return <div></div>;
-};
+export default function DashboardPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      <DashboardHeader />
 
-export default HomePage;
+      <DashboardStats />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentActivity />
+        <RecentWorkflows />
+      </div>
+    </div>
+  );
+}

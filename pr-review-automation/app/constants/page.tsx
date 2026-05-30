@@ -2,16 +2,22 @@ import {
   Blocks,
   BotMessageSquare,
   Brain,
+  BrainCircuit,
   Cable,
   CodeXml,
   GitPullRequestArrow,
+  Home,
   ListTodo,
+  Network,
+  Puzzle,
   ReplaceAll,
+  Settings2,
   ShieldCheck,
   SquareChartGantt,
   User,
   Waypoints,
   Workflow,
+  WorkflowIcon,
 } from "lucide-react";
 export const cardItemsForLeft = [
   {
@@ -104,6 +110,15 @@ export const navitems = [
   { page: "Home", href: "/" },
   { page: "Features", href: "/home" },
   { page: "How it works", href: "/home" },
-  { page: "About", href: "/home" },
+  { page: "About", href: "/about" },
   { page: "Pricing", href: "/home" },
+];
+
+export const sidbarNavItems = [
+  { id: 1, page: "Dashboard", href: "/dashboard", icon: Home },
+  { id: 2, page: "Workflows", href: "/home", icon: WorkflowIcon },
+  { id: 3, page: "Pull Request", href: "/home", icon: Network },
+  { id: 4, page: "AI Review", href: "/about", icon: BrainCircuit },
+  { id: 5, page: "Integration", href: "/home", icon: Puzzle },
+  { id: 6, page: "Settings", href: "/home", icon: Settings2 },
 ];

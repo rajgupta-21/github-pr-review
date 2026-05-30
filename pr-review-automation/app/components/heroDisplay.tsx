@@ -8,9 +8,9 @@ const HeroDisplay = () => {
   return (
     <div className="flex flex-col gap-6">
       {/*glowing Tag*/}
-      <div className="flex bg-violet-500/20 backdrop-blur-2xl p-2 size-fit rounded-2xl items-center">
-        <Star size={15} color="violet" />
-        <div className=" text-violet-500">AI-Powered Github Automation</div>
+      <div className="flex bg-linear-to-r from-[#4017e3]/30 to-[#756BE1]/50 backdrop-blur-2xl p-2 size-fit rounded-2xl items-center gap-2">
+        <Star size={15} color="black" />
+        <div className=" text-black">AI-Powered Github Automation</div>
       </div>
 
       <div className="flex flex-col">

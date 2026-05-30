@@ -69,6 +69,8 @@ router.get("/github/callback", async (req, res) => {
         githubAvatarUrl: user.avatar_url,
 
         githubAccessToken: accessToken,
+
+        plan: user.plan.name,
       });
     } else {
       existingUser.access_token = accessToken;

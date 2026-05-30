@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import SidebarForMain from "../components/sidebar";
 export default async function MainLayout({
   children,
 }: {
@@ -26,10 +27,12 @@ export default async function MainLayout({
   console.log("reponse from something url", data);
   return (
     <div
-      className="min-h-screen bg-white text-black font-mono
+      className="min-h-screen bg-white text-black font-mono flex
     "
     >
-      <div className="rounded-lg">{children}</div>
+      {/*Implementation of Sidebar pending*/}
+      <SidebarForMain />
+      <div className="p-10 flex  ">{children}</div>
     </div>
   );
 }

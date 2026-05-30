@@ -18,6 +18,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       select: false,
     },
+    plan: {
+      type: String,
+      default: "Free",
+    },
 
     role: {
       type: String,
