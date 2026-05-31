@@ -24,7 +24,7 @@ const SidebarForMain = () => {
       </div>
       {/*User display*/}
       <div className="text-white">
-        <UserSettings />
+        <UserSettings wantPlan={true} />
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import githubRoute from "./routes/github.route";
 import LoginRoute from "./routes/login.route";
 import logoutRoute from "./routes/logout.route";
 import RegisterRoute from "./routes/register.route";
+import UserReposRoute from "./routes/repoFetchForUser.route";
 import sessionRoute from "./routes/session.route";
 const app = express();
 Dbconnect();
@@ -50,6 +51,10 @@ app.use("/auth", githubRoute);
 /** 
 health route
 **/
+/*
+Get User's Repo From Github
+*/
+app.use("/user", UserReposRoute);
 app.get("/", (req, res) => {
   return res.json({
     message: "Server is healthy",

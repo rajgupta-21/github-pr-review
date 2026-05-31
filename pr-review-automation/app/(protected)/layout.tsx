@@ -32,7 +32,7 @@ export default async function MainLayout({
     >
       {/*Implementation of Sidebar pending*/}
       <SidebarForMain />
-      <div className="p-10 flex  ">{children}</div>
+      <div className="p-10 flex ">{children}</div>
     </div>
   );
 }

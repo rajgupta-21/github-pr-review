@@ -18,7 +18,7 @@ interface UserResponse {
   user: User;
 }
 
-const UserSettings = () => {
+const UserSettings = ({ wantPlan }: { wantPlan: boolean }) => {
   const [data, setData] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -77,7 +77,9 @@ const UserSettings = () => {
           {data?.user?.githubUsername ?? "User"}
         </h1>
 
-        <span className="text-sm ">{data?.user?.plan}</span>
+        {wantPlan && (
+          <span className="text-sm ">{`${data?.user?.plan} Plan`}</span>
+        )}
       </div>
     </div>
   );

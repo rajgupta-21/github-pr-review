@@ -117,7 +117,7 @@ export const navitems = [
 export const sidbarNavItems = [
   { id: 1, page: "Dashboard", href: "/dashboard", icon: Home },
   { id: 2, page: "Workflows", href: "/home", icon: WorkflowIcon },
-  { id: 3, page: "Pull Request", href: "/home", icon: Network },
+  { id: 3, page: "Repositories", href: "/repos", icon: Network },
   { id: 4, page: "AI Review", href: "/about", icon: BrainCircuit },
   { id: 5, page: "Integration", href: "/home", icon: Puzzle },
   { id: 6, page: "Settings", href: "/home", icon: Settings2 },
