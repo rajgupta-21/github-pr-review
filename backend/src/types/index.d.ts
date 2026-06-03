@@ -2,6 +2,7 @@ import { JwtPayload } from "jsonwebtoken";
 
 interface AuthUser {
   id: string;
+  _id: string;
   email: string;
   githubUsername?: string;
   githubAccessToken?: string;

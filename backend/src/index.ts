@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import { Dbconnect } from "./db/db";
+import connectedRepos from "./routes/connectedRepos.route";
+import connectToRepoRoute from "./routes/connectToRepo.route";
 import githubRoute from "./routes/github.route";
 import LoginRoute from "./routes/login.route";
 import logoutRoute from "./routes/logout.route";
@@ -55,6 +57,12 @@ health route
 Get User's Repo From Github
 */
 app.use("/user", UserReposRoute);
+/*Connect to repo route*/
+app.use("/repo", connectToRepoRoute);
+/*
+connected repos 
+*/
+app.use("/repo", connectedRepos);
 app.get("/", (req, res) => {
   return res.json({
     message: "Server is healthy",
