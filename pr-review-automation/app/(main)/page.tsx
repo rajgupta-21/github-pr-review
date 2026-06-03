@@ -4,24 +4,17 @@ import HeroDisplay from "../components/heroDisplay";
 
 export default function Home() {
   return (
-    <div className="">
-      <div className="flex flex-col  ">
-        <div className="flex">
-          {/*Hero section*/}
-
-          <div className="p-16">
+    <div className="w-full">
+      <div className="flex flex-col gap-16 px-4 py-8 lg:px-10 lg:py-12">
+        <div className="flex flex-col-reverse lg:flex-row gap-10 lg:items-center">
+          <div className="w-full lg:w-1/2">
             <HeroDisplay />
           </div>
-          {/* Heilighted overview of features */}
-          <div className="p-5 pt-4">
+          <div className="w-full lg:w-1/2">
             <FeatureOverview />
           </div>
         </div>
-        {/*Footer*/}
-        <div className="flex ">
-          {/*Footer pending*/}
-          <FooterDisplay />
-        </div>
+        <FooterDisplay />
       </div>
     </div>
   );

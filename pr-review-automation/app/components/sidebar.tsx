@@ -7,7 +7,7 @@ import UserSettings from "./userSettings";
 const SidebarForMain = () => {
   const router = useRouter();
   return (
-    <div className="w-1/7 bg-[#141629] h-screen p-5 pt-10 pb-10 flex flex-col justify-between ">
+    <div className="w-full lg:w-72 bg-[#141629] min-h-screen p-5 pt-10 pb-10 flex flex-col justify-between shrink-0">
       {/*For Icon*/}
       <div className="gap-20 flex flex-col">
         <div

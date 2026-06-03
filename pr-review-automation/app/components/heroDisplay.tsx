@@ -6,7 +6,7 @@ import CardSectionForHero from "./cardSectionForHero";
 const HeroDisplay = () => {
   const router = useRouter();
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-2xl">
       {/*glowing Tag*/}
       <div className="flex bg-linear-to-r from-[#4017e3]/30 to-[#756BE1]/50 backdrop-blur-2xl p-2 size-fit rounded-2xl items-center gap-2">
         <Star size={15} color="black" />
@@ -33,10 +33,10 @@ const HeroDisplay = () => {
         </span>
       </div>
       {/* Buttons */}
-      <div className="relative overflow-hidden rounded-xl cursor-pointer group w-fit ">
+      <div className="relative w-fit overflow-hidden rounded-xl cursor-pointer group inline-flex">
         {/* animated background */}
         <div
-          className="absolute inset-0 w-0 bg-[#4017e3]/90 transition-all duration-500 ease-out group-hover:w-full
+          className="absolute  inset-0 w-0 bg-[#4017e3]/90 transition-all duration-500 ease-out group-hover:w-full
     "
         />
 

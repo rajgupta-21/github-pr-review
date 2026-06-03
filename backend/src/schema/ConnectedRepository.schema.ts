@@ -12,17 +12,43 @@ const ConnectRepoSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    name: {
+      type: String,
+      required: true,
+    },
+    language: {
+      type: String,
+    },
+    html_url: {
+      type: String,
+    },
+    description: {
+      type: String,
+    },
+    repoUrl: {
+      type: String,
+    },
 
     owner: {
       type: String,
       required: true,
     },
-
+    webhookActive: {
+      type: Boolean,
+      default: false,
+    },
+    visibility: {
+      type: String,
+      enum: ["private", "public"],
+      default: "public",
+    },
     fullName: {
       type: String,
       required: true,
     },
-
+    defaultBranch: {
+      type: String,
+    },
     connected: {
       type: Boolean,
       default: true,

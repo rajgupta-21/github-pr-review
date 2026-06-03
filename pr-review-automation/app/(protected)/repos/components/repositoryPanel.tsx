@@ -2,7 +2,7 @@ import TabForRepos from "./Tab";
 
 const RepositoryPanel = () => {
   return (
-    <div className="p-2 w-1/2">
+    <div className="p-2">
       {/*Tab*/}
       <TabForRepos />
     </div>

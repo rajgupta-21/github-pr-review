@@ -42,9 +42,9 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="w-full h-full rounded-none overflow-hidden bg-white grid grid-cols-1 md:grid-cols-2">
+    <div className="w-full min-h-screen rounded-none overflow-hidden bg-white grid grid-cols-1 md:grid-cols-2">
       {/* LEFT SIDE */}
-      <div className="hidden md:block relative bg-linear-to-br from-[#EEF2FF]  to-[#F5F3FF] p-8 lg:p-14 overflow-hidden">
+      <div className="hidden md:block relative bg-linear-to-br from-[#EEF2FF] to-[#F5F3FF] p-8 lg:p-14 overflow-hidden">
         {/* Glow Effects */}
         <div className="absolute top-20 left-10 w-40 h-40 bg-[#6366F1]/10 blur-3xl rounded-full" />
 

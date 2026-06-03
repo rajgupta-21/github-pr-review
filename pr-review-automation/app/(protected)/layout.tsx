@@ -23,16 +23,11 @@ export default async function MainLayout({
   if (!response.ok) {
     redirect("/login");
   }
-  const data = await response.json();
-  console.log("reponse from something url", data);
+
   return (
-    <div
-      className="min-h-screen bg-white text-black font-mono flex
-    "
-    >
-      {/*Implementation of Sidebar pending*/}
+    <div className="min-h-screen bg-white text-black font-mono flex flex-col lg:flex-row">
       <SidebarForMain />
-      <div className="p-10 flex ">{children}</div>
+      <div className="flex p-4 w-full lg:p-10">{children}</div>
     </div>
   );
 }

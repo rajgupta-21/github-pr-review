@@ -41,7 +41,6 @@ router.get("/github/callback", async (req, res) => {
     );
 
     const accessToken = tokenResponse.data.access_token;
-    console.log("OAuth Token:", accessToken);
 
     // Fetch GitHub user
     const githubUser = await axios.get("https://api.github.com/user", {
@@ -51,7 +50,6 @@ router.get("/github/callback", async (req, res) => {
     });
 
     const user = githubUser.data;
-    console.log(user);
 
     let existingUser = await UserModel.findOne({
       githubId: user.id.toString(),

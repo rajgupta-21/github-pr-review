@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Repository } from "../../dashboard/components/DashboardHeader";
+import RepositoryInfo from "./repositoryInfo";
 
 type ConnectedRepo = {
   repoId: number;
@@ -21,6 +22,7 @@ const TabForRepos = () => {
 
   const [repos, setRepos] = useState<Repository[]>([]);
   const [connectedRepos, setConnectedRepos] = useState<number[]>([]);
+  const [clickedRepo, setClickedRepo] = useState<number>();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -58,18 +60,7 @@ const TabForRepos = () => {
     }
   };
 
-  const initialize = async () => {
-    try {
-      setLoading(true);
-
-      await Promise.all([fetchRepositories(), fetchConnectedRepositories()]);
-    } catch (error) {
-      console.error(error);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Initialization handled in useEffect to avoid stale hook dependency problems.
 
   const handleConnectRepoToDb = async (
     owner: string,
@@ -105,7 +96,19 @@ const TabForRepos = () => {
   };
 
   useEffect(() => {
-    initialize();
+    const init = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([fetchRepositories(), fetchConnectedRepositories()]);
+      } catch (error) {
+        console.error(error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
   }, []);
 
   const connectedRepoList = repos.filter((repo) =>
@@ -132,103 +135,111 @@ const TabForRepos = () => {
     isActive === "All Repositories" ? repos : connectedRepoList;
 
   return (
-    <div className="flex flex-col gap-4 m-4">
-      {/* Tabs */}
-      <div className="flex gap-10 border-b pb-2">
-        <button
-          onClick={() => setIsActive("All Repositories")}
-          className={`cursor-pointer font-medium transition-colors ${
-            isActive === "All Repositories"
-              ? "text-[#5B36E8] underline underline-offset-8"
-              : "text-gray-500"
-          }`}
-        >
-          All Repositories ({repos.length})
-        </button>
+    <div className="flex flex-col lg:flex-row justify-between gap-6">
+      <div className="flex flex-col gap-4 w-full lg:w-1/2">
+        {/* Tabs */}
+        <div className="flex gap-10 border-b pb-2">
+          <button
+            onClick={() => setIsActive("All Repositories")}
+            className={`cursor-pointer font-medium transition-colors ${
+              isActive === "All Repositories"
+                ? "text-[#5B36E8] underline underline-offset-8"
+                : "text-gray-500"
+            }`}
+          >
+            All Repositories ({repos.length})
+          </button>
 
-        <button
-          onClick={() => setIsActive("Connected")}
-          className={`cursor-pointer font-medium transition-colors ${
-            isActive === "Connected"
-              ? "text-[#5B36E8] underline underline-offset-8"
-              : "text-gray-500"
-          }`}
-        >
-          Connected ({connectedRepoList.length})
-        </button>
-      </div>
+          <button
+            onClick={() => setIsActive("Connected")}
+            className={`cursor-pointer font-medium transition-colors ${
+              isActive === "Connected"
+                ? "text-[#5B36E8] underline underline-offset-8"
+                : "text-gray-500"
+            }`}
+          >
+            Connected ({connectedRepoList.length})
+          </button>
+        </div>
 
-      {/* Repo List */}
-      <div className="rounded-lg">
-        {displayedRepos.map((repo) => {
-          const isConnected = connectedRepos.includes(repo.id);
+        {/* Repo List */}
+        <div className="rounded-lg">
+          {displayedRepos.map((repo) => {
+            const isConnected = connectedRepos.includes(repo.id);
 
-          return (
-            <div
-              key={repo.id}
-              className="border-b py-4 px-2 flex items-center justify-between hover:bg-gray-50 rounded-lg transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <ChevronRight size={15} />
+            return (
+              <div
+                key={repo.id}
+                className="border-b py-4 px-2 flex items-center justify-between hover:bg-gray-50 rounded-lg transition-all"
+                onClick={() => {
+                  setClickedRepo(repo.id);
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <ChevronRight size={15} />
 
-                <div>
-                  <h3 className="font-medium">{repo.name}</h3>
+                  <div>
+                    <h3 className="font-medium">{repo.name}</h3>
 
-                  <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
-                    <span>{repo.owner}</span>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
+                      <span>{repo.owner}</span>
 
-                    {repo.language && (
-                      <>
-                        <span>•</span>
+                      {repo.language && (
+                        <>
+                          <span>•</span>
 
-                        <span className="bg-green-100 px-2 py-1 rounded-lg text-gray-600">
-                          {repo.language}
-                        </span>
-                      </>
-                    )}
+                          <span className="bg-green-100 px-2 py-1 rounded-lg text-gray-600">
+                            {repo.language}
+                          </span>
+                        </>
+                      )}
 
-                    <span>•</span>
+                      <span>•</span>
 
-                    <span className="bg-blue-100 px-2 py-1 rounded-lg">
-                      {repo.private ? "Private" : "Public"}
-                    </span>
+                      <span className="bg-blue-100 px-2 py-1 rounded-lg">
+                        {repo.private ? "Private" : "Public"}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {isConnected ? (
+                  <button
+                    disabled
+                    className="bg-green-100 text-gray-600 px-4 py-2 rounded-lg"
+                  >
+                    Connected ✓
+                  </button>
+                ) : (
+                  <button
+                    disabled={connectingRepoId === repo.id}
+                    onClick={() =>
+                      handleConnectRepoToDb(repo.owner, repo.fullName, repo.id)
+                    }
+                    className="bg-[#5B36E8] hover:bg-[#4C2EE0] text-white px-4 py-2 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {connectingRepoId === repo.id ? "Connecting..." : "Connect"}
+                  </button>
+                )}
               </div>
+            );
+          })}
 
-              {isConnected ? (
-                <button
-                  disabled
-                  className="bg-green-100 text-gray-600 px-4 py-2 rounded-lg"
-                >
-                  Connected ✓
-                </button>
-              ) : (
-                <button
-                  disabled={connectingRepoId === repo.id}
-                  onClick={() =>
-                    handleConnectRepoToDb(repo.owner, repo.fullName, repo.id)
-                  }
-                  className="bg-[#5B36E8] hover:bg-[#4C2EE0] text-white px-4 py-2 rounded-lg transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {connectingRepoId === repo.id ? "Connecting..." : "Connect"}
-                </button>
-              )}
+          {isActive === "Connected" && connectedRepoList.length === 0 && (
+            <div className="py-12 text-center text-gray-500">
+              No connected repositories yet.
             </div>
-          );
-        })}
+          )}
 
-        {isActive === "Connected" && connectedRepoList.length === 0 && (
-          <div className="py-12 text-center text-gray-500">
-            No connected repositories yet.
-          </div>
-        )}
-
-        {repos.length === 0 && (
-          <div className="py-12 text-center text-gray-500">
-            No repositories found.
-          </div>
-        )}
+          {repos.length === 0 && (
+            <div className="py-12 text-center text-gray-500">
+              No repositories found.
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="w-full lg:w-1/2">
+        {clickedRepo && <RepositoryInfo repoId={clickedRepo} />}
       </div>
     </div>
   );

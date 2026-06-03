@@ -11,6 +11,7 @@ import githubRoute from "./routes/github.route";
 import LoginRoute from "./routes/login.route";
 import logoutRoute from "./routes/logout.route";
 import RegisterRoute from "./routes/register.route";
+import RepoDataFetch from "./routes/repoDataFetch.route";
 import UserReposRoute from "./routes/repoFetchForUser.route";
 import sessionRoute from "./routes/session.route";
 const app = express();
@@ -63,6 +64,10 @@ app.use("/repo", connectToRepoRoute);
 connected repos 
 */
 app.use("/repo", connectedRepos);
+/*
+fetch Connected Repo Data
+*/
+app.use("/user", RepoDataFetch);
 app.get("/", (req, res) => {
   return res.json({
     message: "Server is healthy",

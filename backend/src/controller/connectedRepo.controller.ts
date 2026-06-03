@@ -6,10 +6,6 @@ export async function ConnectRepo(req: Request, res: Response) {
     const { repoId, owner, fullName } = req.body;
 
     const userId = req.user?._id;
-    console.log("repoID:", repoId);
-    console.log("owner:", owner);
-    console.log("fullName:", fullName);
-    console.log("userId:", userId);
     if (!userId || !repoId || !owner || !fullName) {
       return res.status(400).json({
         message: "Missing required fields",
@@ -28,12 +24,42 @@ export async function ConnectRepo(req: Request, res: Response) {
         action: "failure",
       });
     }
+    const response = await fetch(`https://api.github.com/repos/${fullName}`, {
+      headers: {
+        Authorization: `Bearer ${req.user?.githubAccessToken}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+
+    const repos = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        message: repos.message || "Failed to fetch repository data from GitHub",
+        action: "failure",
+      });
+    }
 
     const connectedRepo = await ConnectedRepo.create({
       userId,
-      repoId,
-      owner,
-      fullName,
+
+      repoId: repos.id,
+      owner: repos.owner?.login || owner,
+
+      fullName: repos.full_name,
+
+      name: repos.name,
+      description: repos.description,
+
+      language: repos.language,
+
+      defaultBranch: repos.default_branch,
+
+      visibility: repos.private ? "private" : "public",
+
+      repoUrl: repos.html_url,
+
       connected: true,
     });
 

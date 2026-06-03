@@ -43,16 +43,16 @@ const LoginPage = () => {
       } else {
         setLoginError(true);
       }
-    } catch (error) {
+    } catch (_error) {
       setLoading(false);
       setLoginError(true);
     }
   };
 
   return (
-    <div className="w-full h-full overflow-hidden bg-white shadow-2xl border border-[#E2E8F0] grid grid-cols-2">
+    <div className="w-full min-h-screen overflow-hidden bg-white shadow-2xl border border-[#E2E8F0] grid grid-cols-1 md:grid-cols-2">
       {/* LEFT SIDE */}
-      <div className="relative bg-linear-to-br from-[#EEF2FF]  to-[#F5F3FF] p-14 overflow-hidden">
+      <div className="relative hidden md:block bg-linear-to-br from-[#EEF2FF] to-[#F5F3FF] p-14 overflow-hidden">
         {/* Glow Effects */}
         <div className="absolute top-20 left-10 w-40 h-40 bg-[#6366F1]/10 blur-3xl rounded-full" />
 
@@ -125,7 +125,7 @@ const LoginPage = () => {
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex items-center justify-center px-16">
+      <div className="flex items-center justify-center px-6 py-12 md:px-16">
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="mb-10">

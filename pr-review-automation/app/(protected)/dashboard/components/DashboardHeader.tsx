@@ -46,7 +46,7 @@ export default function DashboardHeader({
     }
   };
   return (
-    <div className="flex justify-between  ">
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-center justify-between">
       {/*DailogBox*/}
       {isOpen && (
         <div
@@ -97,7 +97,7 @@ export default function DashboardHeader({
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <Bell className="text-gray-500" />
 
         <button className="bg-[#5B36E8] hover:bg-[#4C2EE0] text-white px-5 py-3 rounded-xl flex items-center gap-2 transition-all cursor-pointer">

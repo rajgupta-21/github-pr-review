@@ -1,5 +1,6 @@
 "use client";
 
+import { RepoDetails, RepoDetailsResponse } from "@/app/types/page";
 import {
   AxeIcon,
   Check,
@@ -10,12 +11,73 @@ import {
   Settings,
   Workflow,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Tab = "overview" | "workflows" | "reviews" | "settings";
 
-const RepositoryInfo = () => {
+const RepositoryInfo = ({ repoId }: { repoId: number }) => {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [repoFetched, setRepoFetched] = useState<RepoDetails>();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchRepoData = async () => {
+      try {
+        setError(false);
+        setRepoFetched(undefined);
+        setLoading(true);
+
+        const response = await fetch(
+          `http://localhost:4000/user/repo/${repoId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
+
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => null);
+          throw new Error(errorBody?.message || "Failed to fetch repo");
+        }
+
+        const data = (await response.json()) as RepoDetailsResponse;
+        setRepoFetched(data.fetchData);
+        setError(false);
+      } catch (error) {
+        console.error(error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRepoData();
+  }, [repoId]);
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-5xl mx-auto p-6 bg-white rounded-2xl text-center">
+        Loading repository details...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-5xl mx-auto p-6 bg-white rounded-2xl text-center text-red-600">
+        Unable to load repository details.
+      </div>
+    );
+  }
+
+  if (!repoFetched) {
+    return (
+      <div className="w-full max-w-5xl mx-auto p-6 bg-white rounded-2xl text-center text-gray-600">
+        Repository details are not available.
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
@@ -28,29 +90,37 @@ const RepositoryInfo = () => {
             </div>
 
             <div>
-              <h1 className="text-3xl font-bold">Portfolio Website</h1>
+              <h1 className="text-3xl font-bold">{repoFetched?.name}</h1>
 
-              <p className="text-gray-500 mt-1">
-                My personal portfolio built with Next.js and Tailwind CSS.
-              </p>
+              <p className="text-gray-500 mt-1">{repoFetched?.description}</p>
 
               <div className="flex items-center gap-3 mt-4 text-gray-600 flex-wrap">
-                <span>rajgupta-21/Portfolio-Website</span>
+                <span>{repoFetched?.fullName}</span>
 
                 <span className="flex items-center">
                   <Dot />
-                  Next.js
+                  {repoFetched?.language ?? "Unknown"}
                 </span>
 
-                <span>Updated 2 days ago</span>
+                <span>
+                  {repoFetched?.createdAt
+                    ? new Date(repoFetched.createdAt).toLocaleDateString()
+                    : "Unknown"}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-700 font-medium">
+            <div
+              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium ${
+                repoFetched.connected
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+            >
               <Check size={16} />
-              Connected
+              {repoFetched.connected ? "Connected" : "Disconnected"}
             </div>
 
             <button className="p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
@@ -118,33 +188,56 @@ const RepositoryInfo = () => {
             <div className="divide-y">
               <div className="flex justify-between p-5">
                 <span className="text-gray-500">Repository ID</span>
-                <span className="font-medium">845614512</span>
+                <span className="font-medium">
+                  {repoFetched?.repoId ?? "—"}
+                </span>
               </div>
 
               <div className="flex justify-between p-5">
                 <span className="text-gray-500">Default Branch</span>
-                <span className="font-medium">main</span>
+                <span className="font-medium">
+                  {repoFetched?.defaultBranch ?? "—"}
+                </span>
               </div>
 
               <div className="flex justify-between p-5">
                 <span className="text-gray-500">Visibility</span>
 
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                  Public
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    repoFetched?.visibility === "private"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {repoFetched?.visibility
+                    ? repoFetched.visibility.charAt(0).toUpperCase() +
+                      repoFetched.visibility.slice(1)
+                    : "—"}
                 </span>
               </div>
 
               <div className="flex justify-between p-5">
                 <span className="text-gray-500">Connected On</span>
-                <span className="font-medium">June 03, 2026</span>
+                <span className="font-medium">
+                  {repoFetched?.createdAt
+                    ? new Date(repoFetched.createdAt).toLocaleDateString()
+                    : "—"}
+                </span>
               </div>
 
               <div className="flex justify-between p-5">
                 <span className="text-gray-500">Webhook Status</span>
 
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+                <span
+                  className={`px-3 py-1 rounded-full flex items-center gap-2 text-sm ${
+                    repoFetched?.webhookActive
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
+                >
                   <Check size={14} />
-                  Active
+                  {repoFetched?.webhookActive ? "Active" : "Inactive"}
                 </span>
               </div>
             </div>

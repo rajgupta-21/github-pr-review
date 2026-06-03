@@ -4,10 +4,10 @@ import CentralNode from "./centralNode";
 
 const FeatureOverview = () => {
   return (
-    <div className="relative grid grid-cols-3 gap-20 items-center py-32">
+    <div className="relative grid grid-cols-1 lg:grid-cols-3 gap-12 xl:gap-20 items-center py-20 lg:py-32">
       {/* SVG CONNECTIONS */}
       <svg
-        className="absolute top-0 left-0 w-full h-full pointer-events-none z-1"
+        className="hidden lg:block absolute top-0 left-0 w-full h-full pointer-events-none z-1"
         viewBox="0 0 1400 700"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

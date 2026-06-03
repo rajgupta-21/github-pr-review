@@ -40,7 +40,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-6 w-[80vw]">
+    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto px-4 py-6">
       <DashboardHeader user={data?.user.githubUsername} />
 
       <DashboardStats />
