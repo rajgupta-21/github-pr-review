@@ -135,10 +135,10 @@ const TabForRepos = () => {
     isActive === "All Repositories" ? repos : connectedRepoList;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between gap-6">
+    <div className="flex flex-col lg:flex-row justify-between gap-6 ">
       <div className="flex flex-col gap-4 w-full lg:w-1/2">
         {/* Tabs */}
-        <div className="flex gap-10 border-b pb-2">
+        <div className="flex gap-10 border-b pb-2  w-[50vh]">
           <button
             onClick={() => setIsActive("All Repositories")}
             className={`cursor-pointer font-medium transition-colors ${
@@ -163,7 +163,7 @@ const TabForRepos = () => {
         </div>
 
         {/* Repo List */}
-        <div className="rounded-lg">
+        <div className="rounded-lg  w-[50vh]">
           {displayedRepos.map((repo) => {
             const isConnected = connectedRepos.includes(repo.id);
 

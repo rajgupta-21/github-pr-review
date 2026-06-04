@@ -7,6 +7,7 @@ import express from "express";
 import { Dbconnect } from "./db/db";
 import connectedRepos from "./routes/connectedRepos.route";
 import connectToRepoRoute from "./routes/connectToRepo.route";
+import fecthPRRepoRoute from "./routes/fetchPrForRepo.route";
 import githubRoute from "./routes/github.route";
 import LoginRoute from "./routes/login.route";
 import logoutRoute from "./routes/logout.route";
@@ -68,6 +69,8 @@ app.use("/repo", connectedRepos);
 fetch Connected Repo Data
 */
 app.use("/user", RepoDataFetch);
+/*Fetch PR for a Repo */
+app.use("/repo", fecthPRRepoRoute);
 app.get("/", (req, res) => {
   return res.json({
     message: "Server is healthy",
