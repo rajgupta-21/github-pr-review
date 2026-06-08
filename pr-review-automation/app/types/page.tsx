@@ -46,3 +46,31 @@ export type RepoDetailsResponse = {
   action: string;
   fetchData: RepoDetails;
 };
+
+export interface PullRequest {
+  id: number;
+  number: number;
+
+  title: string;
+  state: "open" | "closed";
+
+  html_url: string;
+
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+  merged_at: string | null;
+
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+
+  head: {
+    ref: string;
+  };
+
+  base: {
+    ref: string;
+  };
+}

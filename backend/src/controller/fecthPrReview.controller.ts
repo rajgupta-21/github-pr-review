@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 export async function fectchPrOfRepo(req: Request, res: Response) {
   try {
-    const { userName, repoName } = req.body;
+    const { userName, repoName } = req.params;
     if (!userName || !repoName) {
       return res.status(400).json({
         message: "username and repository name are required",
