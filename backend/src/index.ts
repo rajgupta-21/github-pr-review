@@ -8,6 +8,7 @@ import { Dbconnect } from "./db/db";
 import connectedRepos from "./routes/connectedRepos.route";
 import connectToRepoRoute from "./routes/connectToRepo.route";
 import fetchAllUserPr from "./routes/fetchAllPrs.route";
+import fetchFilesChanged from "./routes/fetchFilesChanged.route";
 import fectchPrByNumber from "./routes/fetchPrByNumber.route";
 import fecthPRRepoRoute from "./routes/fetchPrForRepo.route";
 import githubRoute from "./routes/github.route";
@@ -77,6 +78,8 @@ app.use("/repo", fecthPRRepoRoute);
 app.use("/repo", fetchAllUserPr);
 /*Fetch  PR  by Number */
 app.use("/user", fectchPrByNumber);
+/*Fetch  filesChanged  by prNumber */
+app.use("/pr", fetchFilesChanged);
 app.get("/", (req, res) => {
   return res.json({
     message: "Server is healthy",

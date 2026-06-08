@@ -74,3 +74,68 @@ export interface PullRequest {
     ref: string;
   };
 }
+
+export interface GithubPullRequestFile {
+  sha: string;
+  filename: string;
+  status: "added" | "modified" | "removed" | "renamed";
+  additions: number;
+  deletions: number;
+  changes: number;
+
+  blob_url: string;
+  raw_url: string;
+  contents_url: string;
+
+  patch?: string;
+}
+
+export interface filesFetched {
+  message: string;
+  filesChanged: {
+    data: GithubPullRequestFile[];
+  };
+  action: string;
+}
+
+export type PullRequestCard = {
+  id: number;
+  number: number;
+  title: string;
+
+  state: "open" | "closed";
+
+  merged: boolean;
+  merged_at: string | null;
+
+  html_url: string;
+
+  created_at: string;
+  updated_at: string;
+
+  comments: number;
+  commits: number;
+
+  changed_files: number;
+  additions: number;
+  deletions: number;
+
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+
+  head: {
+    ref: string;
+  };
+
+  base: {
+    ref: string;
+  };
+};
+
+export interface dataFetched {
+  message: string;
+  pr: PullRequestCard;
+  action: string;
+}
