@@ -122,3 +122,7 @@ export const sidbarNavItems = [
   { id: 5, page: "Integration", href: "/home", icon: Puzzle },
   { id: 6, page: "Settings", href: "/home", icon: Settings2 },
 ];
+
+export default function ConstantsRoute() {
+  return null;
+}

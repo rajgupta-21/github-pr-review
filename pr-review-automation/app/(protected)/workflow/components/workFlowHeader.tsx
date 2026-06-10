@@ -9,7 +9,7 @@ import {
 
 const WorkFlowHeader = () => {
   return (
-    <div className="flex items-center justify-between bg-white  rounded-2xl  ">
+    <div className="flex items-center justify-between   ">
       {/* Left Section */}
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-500 hover:text-gray-800 cursor-pointer">

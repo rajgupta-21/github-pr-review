@@ -51,7 +51,7 @@ export default function NodeSidebar() {
   };
 
   return (
-    <div className="w-64 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden flex-shrink-0 h-full">
+    <div className="w-full bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden flex-shrink-0 h-full">
       <div className="border-b border-gray-200 px-4 py-3">
         <h2 className="font-semibold text-sm text-gray-900">Workflow Nodes</h2>
         <p className="text-xs text-gray-500 mt-1">Drag to canvas</p>

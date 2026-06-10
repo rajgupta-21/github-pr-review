@@ -23,7 +23,6 @@ const TabForRepos = () => {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [connectedRepos, setConnectedRepos] = useState<number[]>([]);
   const [clickedRepo, setClickedRepo] = useState<number>();
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -135,10 +134,10 @@ const TabForRepos = () => {
     isActive === "All Repositories" ? repos : connectedRepoList;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between gap-6 ">
+    <div className="flex flex-col lg:flex-row justify-between gap-6 w-full">
       <div className="flex flex-col gap-4 w-full lg:w-1/2">
         {/* Tabs */}
-        <div className="flex gap-10 border-b pb-2  w-[50vh]">
+        <div className="flex gap-10 border-b pb-2 w-full max-w-3xl">
           <button
             onClick={() => setIsActive("All Repositories")}
             className={`cursor-pointer font-medium transition-colors ${
@@ -163,14 +162,14 @@ const TabForRepos = () => {
         </div>
 
         {/* Repo List */}
-        <div className="rounded-lg  w-[50vh]">
+        <div className="rounded-lg w-full max-w-3xl">
           {displayedRepos.map((repo) => {
             const isConnected = connectedRepos.includes(repo.id);
 
             return (
               <div
                 key={repo.id}
-                className="border-b py-4 px-2 flex items-center justify-between hover:bg-gray-50 rounded-lg transition-all"
+                className="border-b py-4 px-2 flex items-center justify-between hover:bg-gray-50 rounded-lg transition-all cursor-pointer"
                 onClick={() => {
                   setClickedRepo(repo.id);
                 }}
@@ -207,16 +206,18 @@ const TabForRepos = () => {
                   <button
                     disabled
                     className="bg-green-100 text-gray-600 px-4 py-2 rounded-lg"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Connected ✓
                   </button>
                 ) : (
                   <button
                     disabled={connectingRepoId === repo.id}
-                    onClick={() =>
-                      handleConnectRepoToDb(repo.owner, repo.fullName, repo.id)
-                    }
-                    className="bg-[#5B36E8] hover:bg-[#4C2EE0] text-white px-4 py-2 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConnectRepoToDb(repo.owner, repo.fullName, repo.id);
+                    }}
+                    className="bg-[#5B36E8] hover:bg-[#4C2EE0] text-white px-4 py-2 rounded-lg transition-all disabled:opacity-50"
                   >
                     {connectingRepoId === repo.id ? "Connecting..." : "Connect"}
                   </button>
@@ -239,7 +240,7 @@ const TabForRepos = () => {
         </div>
       </div>
       <div className="w-full lg:w-1/2">
-        {clickedRepo && <RepositoryInfo repoId={clickedRepo} />}
+        {clickedRepo ? <RepositoryInfo repoId={clickedRepo} /> : null}
       </div>
     </div>
   );

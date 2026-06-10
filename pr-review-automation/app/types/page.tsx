@@ -139,3 +139,7 @@ export interface dataFetched {
   pr: PullRequestCard;
   action: string;
 }
+
+export default function TypesRoute() {
+  return null;
+}

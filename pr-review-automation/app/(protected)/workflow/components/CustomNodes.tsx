@@ -92,25 +92,56 @@ export function ActionNode(props: CustomNodeProps) {
 }
 
 export function BaseNode({ data, isConnecting, xPos, yPos }: CustomNodeProps) {
-  // Extract node type from data or use a default
   const nodeType =
     (data as any)?.nodeType || (data as any)?.label?.toLowerCase() || "default";
   const style = nodeStyles[nodeType] || nodeStyles.pr_opened;
 
   return (
     <div
-      className={`px-4 py-3 rounded-lg border-2 ${style.bg} ${style.borderColor} shadow-md hover:shadow-lg transition-all cursor-pointer bg-white`}
+      className={`relative overflow-hidden rounded-3xl border-2 ${style.bg} ${style.borderColor} shadow-xl transition transform hover:-translate-y-0.5 hover:shadow-2xl cursor-pointer bg-white min-w-[220px]`}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{
+          background: "#7c3aed",
+          borderRadius: 9999,
+          width: 12,
+          height: 12,
+          top: -6,
+        }}
+      />
 
-      <div className="flex items-center gap-2">
-        <div className="flex-shrink-0">{style.icon}</div>
-        <div>
-          <div className="font-medium text-sm text-gray-900">{data.label}</div>
+      <div className="px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white shadow-sm"
+            aria-hidden="true"
+          >
+            {style.icon}
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-slate-900">
+              {data.label}
+            </div>
+            <div className="mt-1 inline-flex rounded-full bg-white/90 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              {nodeType.replace(/_/g, " ")}
+            </div>
+          </div>
         </div>
       </div>
 
-      <Handle type="source" position={Position.Bottom} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{
+          background: "#7c3aed",
+          borderRadius: 9999,
+          width: 12,
+          height: 12,
+          bottom: -6,
+        }}
+      />
     </div>
   );
 }

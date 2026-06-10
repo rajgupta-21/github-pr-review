@@ -49,6 +49,20 @@ const ConnectRepoSchema = new mongoose.Schema(
     defaultBranch: {
       type: String,
     },
+    workflow: {
+      nodes: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: [],
+      },
+      edges: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: [],
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
     connected: {
       type: Boolean,
       default: true,

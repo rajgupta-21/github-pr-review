@@ -18,6 +18,7 @@ import RegisterRoute from "./routes/register.route";
 import RepoDataFetch from "./routes/repoDataFetch.route";
 import UserReposRoute from "./routes/repoFetchForUser.route";
 import sessionRoute from "./routes/session.route";
+import workflowRoute from "./routes/workflow.route";
 const app = express();
 Dbconnect();
 
@@ -76,6 +77,8 @@ app.use("/user", RepoDataFetch);
 app.use("/repo", fecthPRRepoRoute);
 /*Fetch  All PR for a Repo */
 app.use("/repo", fetchAllUserPr);
+/* Workflow persistence */
+app.use("/user", workflowRoute);
 /*Fetch  PR  by Number */
 app.use("/user", fectchPrByNumber);
 /*Fetch  filesChanged  by prNumber */
