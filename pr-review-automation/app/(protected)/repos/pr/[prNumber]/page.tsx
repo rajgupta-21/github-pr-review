@@ -22,10 +22,6 @@ import {
 } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-// These describe the shape of data coming back from the APIs
-
 type Commit = {
   sha: string;
   commit: {
@@ -34,7 +30,6 @@ type Commit = {
   };
   author: { login: string; avatar_url: string } | null;
 };
-
 type ReviewComment = {
   id: number;
   user: { login: string; avatar_url: string };
@@ -43,8 +38,6 @@ type ReviewComment = {
   line: number | null;
   created_at: string;
 };
-
-// A "timeline event" shows what happened to the PR over time
 type TimelineEvent = {
   id: string;
   type: "opened" | "commit" | "review" | "merged" | "closed" | "comment";
@@ -53,8 +46,6 @@ type TimelineEvent = {
   message: string;
   date: string;
 };
-
-// AI finding = one issue or praise found by the AI in a specific file
 type AIFinding = {
   id: string;
   type: "security" | "performance" | "quality" | "positive";
@@ -64,9 +55,6 @@ type AIFinding = {
   description: string;
   severity: "high" | "medium" | "low" | "info";
 };
-
-// ─── Dummy Data ───────────────────────────────────────────────────────────────
-// Replace these with real API calls when you're ready
 
 const DUMMY_COMMITS: Commit[] = [
   {
@@ -312,10 +300,17 @@ const StatCard = ({
 const PrDetails = () => {
   const params = useParams();
   const searchParams = useSearchParams();
+
   const { prNumber } = params;
+
   const userName = searchParams.get("userName");
   const repoName = searchParams.get("repoName");
   const userId = searchParams.get("userId");
+  console.log("params", params);
+  console.log("prNumber", prNumber);
+  console.log("userName", userName);
+  console.log("repoName", repoName);
+  console.log("userId", userId);
 
   const [pullRequest, setPullRequest] = useState<PullRequestCard | undefined>();
   const [filesChanged, setFilesChanged] = useState<GithubPullRequestFile[]>([]);
@@ -487,21 +482,21 @@ const PrDetails = () => {
         {/* Author info + branch flow */}
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <img
-            src={pullRequest?.user.avatar_url}
+            src={pullRequest?.author.avatar_url}
             className="w-5 h-5 rounded-full"
             alt="avatar"
           />
           <span className="font-medium text-gray-700">
-            {pullRequest?.user.login}
+            {pullRequest?.author.login}
           </span>
           <span>wants to merge</span>
           <GitBranch size={13} />
           <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">
-            {pullRequest?.head.ref}
+            {pullRequest?.sourceBranch}
           </code>
           <span>into</span>
           <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">
-            {pullRequest?.base.ref}
+            {pullRequest?.targetBranch}
           </code>
           <span className="ml-1">
             · opened {formatDate(pullRequest?.created_at)}
@@ -518,7 +513,7 @@ const PrDetails = () => {
           <StatCard
             icon={<FileCode size={15} className="text-blue-600" />}
             label="Files Changed"
-            value={pullRequest?.changed_files ?? "—"}
+            value={pullRequest?.changedFiles ?? "—"}
             color="bg-blue-50"
           />
           <StatCard
@@ -881,12 +876,12 @@ const PrDetails = () => {
         <div className="border border-gray-200 rounded-xl overflow-hidden">
           <div className="grid grid-cols-2">
             {[
-              ["PR number", `#${pullRequest?.number}`],
+              ["PR number", `#${pullRequest?.githubPrNumber}`],
               ["State", pullRequest?.state],
               ["Created", formatDate(pullRequest?.created_at)],
               ["Updated", formatDate(pullRequest?.updated_at)],
               ["Merged at", formatDate(pullRequest?.merged_at)],
-              ["Author", pullRequest?.user.login],
+              ["Author", pullRequest?.author.login],
             ].map(([label, value], i) => (
               <div
                 key={label}

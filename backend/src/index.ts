@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import { Dbconnect } from "./db/db";
+import aiReviewRoute from "./routes/aiReviewForPR.route";
 import connectedRepos from "./routes/connectedRepos.route";
 import connectToRepoRoute from "./routes/connectToRepo.route";
 import fetchAllUserPr from "./routes/fetchAllPrs.route";
@@ -63,7 +64,9 @@ health route
 Get User's Repo From Github
 */
 app.use("/user", UserReposRoute);
-/*Connect to repo route*/
+/*
+Connect to repo route
+*/
 app.use("/repo", connectToRepoRoute);
 /*
 connected repos 
@@ -73,16 +76,31 @@ app.use("/repo", connectedRepos);
 fetch Connected Repo Data
 */
 app.use("/user", RepoDataFetch);
-/*Fetch PR for a Repo */
+/*
+Fetch PR for a Repo 
+*/
 app.use("/repo", fecthPRRepoRoute);
-/*Fetch  All PR for a Repo */
+/*
+Fetch  All PR for a Repo 
+*/
 app.use("/repo", fetchAllUserPr);
-/* Workflow persistence */
+/*
+ Workflow persistence 
+ */
 app.use("/user", workflowRoute);
-/*Fetch  PR  by Number */
+/*
+Fetch  PR  by Number 
+*/
+
 app.use("/user", fectchPrByNumber);
-/*Fetch  filesChanged  by prNumber */
+/*
+Fetch  filesChanged  by prNumber 
+*/
 app.use("/pr", fetchFilesChanged);
+/*
+ai-review route
+*/
+app.use("/pr", aiReviewRoute);
 app.get("/", (req, res) => {
   return res.json({
     message: "Server is healthy",

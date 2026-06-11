@@ -62,7 +62,7 @@ router.post("/workflow", authMiddleware, async (req: any, res) => {
           updatedAt: new Date(),
         },
       },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     )
       .select("repoId name fullName workflow")
       .lean();

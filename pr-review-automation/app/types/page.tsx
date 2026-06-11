@@ -100,7 +100,7 @@ export interface filesFetched {
 
 export type PullRequestCard = {
   id: number;
-  number: number;
+  githubPrNumber: number;
   title: string;
 
   state: "open" | "closed";
@@ -116,22 +116,17 @@ export type PullRequestCard = {
   comments: number;
   commits: number;
 
-  changed_files: number;
+  changedFiles: number;
   additions: number;
   deletions: number;
 
-  user: {
+  author: {
     login: string;
     avatar_url: string;
   };
 
-  head: {
-    ref: string;
-  };
-
-  base: {
-    ref: string;
-  };
+  sourceBranch: string;
+  targetBranch: string;
 };
 
 export interface dataFetched {

@@ -130,7 +130,7 @@ const RepositoryInfo = ({ repoId }: { repoId: number }) => {
         if (!prRes.ok) throw new Error("Failed to fetch PRs");
 
         const prData = await prRes.json();
-        setPullRequests(prData.allPrs);
+        setPullRequests(prData.prs);
       } catch (err) {
         console.error(err);
         setError(true);
@@ -305,86 +305,87 @@ const RepositoryInfo = ({ repoId }: { repoId: number }) => {
               Recent Pull Request Reviews
             </h2>
           </div>
-          {pullRequests.length === 0 ? (
+          {pullRequests?.length === 0 ? (
             <div className="text-center py-10 text-gray-500">No PRs Yet</div>
           ) : (
             <div className="space-y-4">
-              {pullRequests.map((pr) => (
-                <div
-                  key={pr.id}
-                  className="border border-gray-200 rounded-xl p-5 hover:border-[#5B36E8] transition-all"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-lg">
-                        #{pr.number} {pr.title}
-                      </h3>
+              {pullRequests &&
+                pullRequests.map((pr) => (
+                  <div
+                    key={pr.id}
+                    className="border border-gray-200 rounded-xl p-5 hover:border-[#5B36E8] transition-all"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          #{pr.number} {pr.title}
+                        </h3>
 
-                      <p className="text-sm text-gray-500 mt-1">
-                        by {pr.user.login}
-                      </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          by {pr.author.login}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          pr.merged_at
+                            ? "bg-purple-100 text-purple-700"
+                            : pr.state === "open"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {pr.merged_at
+                          ? "Merged"
+                          : pr.state === "open"
+                            ? "Open"
+                            : "Closed"}
+                      </span>
                     </div>
 
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        pr.merged_at
-                          ? "bg-purple-100 text-purple-700"
-                          : pr.state === "open"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {pr.merged_at
-                        ? "Merged"
-                        : pr.state === "open"
-                          ? "Open"
-                          : "Closed"}
-                    </span>
+                    <div className="flex gap-6 mt-4 text-sm text-gray-600">
+                      <span>
+                        Source:
+                        <strong className="ml-1">{pr.sourceBranch}</strong>
+                      </span>
+
+                      <span>
+                        Target:
+                        <strong className="ml-1">{pr.targetBranch}</strong>
+                      </span>
+                    </div>
+
+                    <div className="mt-4 text-sm text-gray-500">
+                      Updated {new Date(pr.updated_at).toLocaleString()}
+                    </div>
+
+                    <div className="mt-4 flex gap-3">
+                      <button
+                        className="px-4 py-2 bg-[#5B36E8] text-white rounded-lg hover:opacity-90 cursor-pointer"
+                        onClick={() => {
+                          router.push(
+                            `/repos/pr/${pr.githubPrNumber}?userName=${encodeURIComponent(
+                              pr.author.login,
+                            )}&repoName=${encodeURIComponent(repo.name)}&userId=${encodeURIComponent(
+                              repo.userId,
+                            )}`,
+                          );
+                        }}
+                      >
+                        Review PR
+                      </button>
+
+                      <a
+                        href={pr.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                      >
+                        Open GitHub
+                      </a>
+                    </div>
                   </div>
-
-                  <div className="flex gap-6 mt-4 text-sm text-gray-600">
-                    <span>
-                      Source:
-                      <strong className="ml-1">{pr.head.ref}</strong>
-                    </span>
-
-                    <span>
-                      Target:
-                      <strong className="ml-1">{pr.base.ref}</strong>
-                    </span>
-                  </div>
-
-                  <div className="mt-4 text-sm text-gray-500">
-                    Updated {new Date(pr.updated_at).toLocaleString()}
-                  </div>
-
-                  <div className="mt-4 flex gap-3">
-                    <button
-                      className="px-4 py-2 bg-[#5B36E8] text-white rounded-lg hover:opacity-90 cursor-pointer"
-                      onClick={() => {
-                        router.push(
-                          `/repos/pr/${pr.number}?userName=${encodeURIComponent(
-                            pr.user.login,
-                          )}&repoName=${encodeURIComponent(repo.name)}&userId=${encodeURIComponent(
-                            repo.userId,
-                          )}`,
-                        );
-                      }}
-                    >
-                      Review PR
-                    </button>
-
-                    <a
-                      href={pr.html_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                    >
-                      Open GitHub
-                    </a>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>
