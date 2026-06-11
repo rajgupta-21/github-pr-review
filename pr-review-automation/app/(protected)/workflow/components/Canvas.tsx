@@ -13,13 +13,10 @@ import ReactFlow, {
   useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { BaseNode } from "./CustomNodes";
 import Inspector from "./Inspector";
 import NodeSidebar from "./NodeSidebar";
 
-const nodeTypes = {
-  default: BaseNode,
-};
+const nodeTypes = {};
 
 type WorkflowGraph = {
   nodes: Node[];
@@ -356,7 +353,7 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
                 fitViewOptions={{ padding: 0.2 }}
                 minZoom={0.25}
                 maxZoom={1.5}
-                style={{ width: "100%", height: "100%" }}
+                style={{ width: "100%", height: "100%", border: "20px" }}
               >
                 <Background color="#aaa" gap={16} />
                 <Controls />
