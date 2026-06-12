@@ -1,7 +1,10 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const grok = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+
+  // Grok OpenAI-compatible endpoint
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
 export async function generatePRReview(
@@ -54,6 +57,7 @@ ${file.patch || "No patch available"}
   )
   .join("\n")}
 
+
 Return ONLY valid JSON.
 
 {
@@ -76,9 +80,9 @@ Return ONLY valid JSON.
 }
 `;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-
+  const response = await grok.chat.completions.create({
+    // Grok model
+    model: "llama-3.3-70b-versatile",
     response_format: {
       type: "json_object",
     },
@@ -87,8 +91,9 @@ Return ONLY valid JSON.
       {
         role: "system",
         content:
-          "You are an expert code reviewer with deep experience in TypeScript, Node.js, React, Next.js and backend architecture.",
+          "You are an expert GitHub code reviewer with deep experience in TypeScript, Node.js, React, Next.js and backend architecture.",
       },
+
       {
         role: "user",
         content: prompt,
@@ -96,5 +101,5 @@ Return ONLY valid JSON.
     ],
   });
 
-  return response.choices[0].message.content;
+  return response.choices[0].message.content ?? "{}";
 }

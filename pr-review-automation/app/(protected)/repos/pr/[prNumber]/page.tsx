@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import AIReviewPanel from "./components/aiREviewPanel";
 type Commit = {
   sha: string;
   commit: {
@@ -295,7 +296,27 @@ const StatCard = ({
     </div>
   </div>
 );
+type AIReviewResponse = {
+  review: {
+    summary: string;
+    overallScore: number;
+    securityScore: number;
+    performanceScore: number;
+    qualityScore: number;
 
+    findings: {
+      severity: "Critical" | "High" | "Medium" | "Low";
+      file: string;
+      issue: string;
+      reason: string;
+      suggestion: string;
+    }[];
+
+    strengths: string[];
+
+    recommendation: "Approve" | "Request Changes";
+  };
+};
 // ─── Main Component ───────────────────────────────────────────────────────────
 const PrDetails = () => {
   const params = useParams();
@@ -306,16 +327,17 @@ const PrDetails = () => {
   const userName = searchParams.get("userName");
   const repoName = searchParams.get("repoName");
   const userId = searchParams.get("userId");
-  console.log("params", params);
-  console.log("prNumber", prNumber);
-  console.log("userName", userName);
-  console.log("repoName", repoName);
-  console.log("userId", userId);
 
   const [pullRequest, setPullRequest] = useState<PullRequestCard | undefined>();
   const [filesChanged, setFilesChanged] = useState<GithubPullRequestFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [onClickAiPanel, setOnClickAiPanel] = useState<boolean>(false);
+  const [aiReviewResponse, setAiReviewResponse] =
+    useState<AIReviewResponse | null>(null);
+  const [inputContext, setinputContext] = useState<string | undefined>("");
+  const [openInputForContext, setOpenInputForContext] =
+    useState<boolean>(false);
 
   // Tab state — which section is active
   // "files" | "info" | "commits" | "comments" | "timeline" | "ai"
@@ -402,15 +424,59 @@ const PrDetails = () => {
     fetchFiles();
   }, [prNumber, userName, repoName, userId]);
 
-  // Simulate running the AI review (replace with real API call)
-  const handleRunAI = () => {
-    setAiRunning(true);
-    setAiDone(false);
-    setTimeout(() => {
-      setAiRunning(false);
-      setAiDone(true);
-      setActiveTab("ai");
-    }, 2000);
+  const handleRunAIReview = async () => {
+    // (userId, owner, repoName, pr_Number, context);
+    try {
+      setLoading(true);
+      const response = await fetch("http://localhost:4000/pr/ai-review", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          owner: userName,
+          repoName,
+          pr_Number: prNumber,
+        }),
+        credentials: "include",
+      });
+      const data = await response.json();
+      setLoading(false);
+      setAiReviewResponse(data);
+      console.log(data);
+    } catch (error) {
+      setError(true);
+      console.error(error);
+    }
+  };
+
+  const handleRunAIReviewWithContext = async (context: string | undefined) => {
+    // (userId, owner, repoName, pr_Number, context);
+    try {
+      setLoading(true);
+      const response = await fetch("http://localhost:4000/pr/ai-review", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          owner: userName,
+          repoName,
+          pr_Number: prNumber,
+          context,
+        }),
+        credentials: "include",
+      });
+      const data = await response.json();
+      setLoading(false);
+      setAiReviewResponse(data);
+      console.log(data);
+    } catch (error) {
+      setError(true);
+      console.error(error);
+    }
   };
 
   // Simulate posting review to GitHub (replace with real API call)
@@ -450,7 +516,7 @@ const PrDetails = () => {
       : DUMMY_AI_FINDINGS.filter((f) => f.type === aiFilter);
 
   return (
-    <div className="w-full px-4 py-6 space-y-5">
+    <div className="w-full px-4 py-6 space-y-5 ">
       {/* ── Breadcrumb ── */}
       {/*
         Breadcrumb = a navigation trail showing where you are in the app.
@@ -545,7 +611,10 @@ const PrDetails = () => {
         {/* Action buttons */}
         <div className="flex gap-2 flex-wrap">
           <button
-            onClick={handleRunAI}
+            onClick={() => {
+              handleRunAIReview();
+              setOnClickAiPanel(true);
+            }}
             disabled={aiRunning}
             className="flex items-center gap-1.5 px-4 py-1.5 cursor-pointer bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 disabled:opacity-60"
           >
@@ -572,7 +641,46 @@ const PrDetails = () => {
                   : "Post Review to GitHub"}
             </button>
           )}
-
+          <button
+            onClick={() => {
+              setOpenInputForContext(true);
+            }}
+            className="flex items-center gap-1.5 px-4 py-1.5 cursor-pointer bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 disabled:opacity-60"
+          >
+            Provide Context to ai (optional)
+          </button>
+          {openInputForContext && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+              <div className="bg-white rounded-xl p-6 shadow-xl flex gap-3 items-start justify-between">
+                <div className="flex flex-col gap-3">
+                  <input
+                    placeholder="Enter context"
+                    value={inputContext}
+                    onChange={(e) => {
+                      setinputContext(e.target.value);
+                    }}
+                    className=" w-80 px-4 py-3 border rounded-lg outline-none "
+                  />
+                  <button
+                    className="p-2 bg-purple-600 size-fit rounded-md mx-auto text-white"
+                    onClick={() => {
+                      handleRunAIReviewWithContext(inputContext);
+                    }}
+                  >
+                    Submit
+                  </button>
+                </div>
+                <span
+                  className="p-2 cursor-pointer "
+                  onClick={() => {
+                    setOpenInputForContext(false);
+                  }}
+                >
+                  x
+                </span>
+              </div>
+            </div>
+          )}
           <a
             href={pullRequest?.html_url}
             target="_blank"
@@ -696,7 +804,7 @@ const PrDetails = () => {
           <div className="flex-1 overflow-auto min-w-0">
             {currentFile ? (
               <>
-                <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200  top-0 ">
                   <code className="text-sm font-medium text-gray-800">
                     {currentFile.filename}
                   </code>
@@ -892,6 +1000,12 @@ const PrDetails = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {onClickAiPanel && aiReviewResponse?.review && (
+        <div className="mt-6">
+          <AIReviewPanel review={aiReviewResponse.review} />
         </div>
       )}
     </div>
