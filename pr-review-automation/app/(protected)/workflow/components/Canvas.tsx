@@ -15,12 +15,36 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import Inspector from "./Inspector";
 import NodeSidebar from "./NodeSidebar";
+import ActionNode from "./nodes/actionNode";
+import AiReviewNode from "./nodes/aiReviewNode";
+import GithubWebhookNode from "./nodes/githubWebhookNode";
+import SecurityNode from "./nodes/securityScanNode";
 
-const nodeTypes = {};
+const nodeTypes = {
+  githubWebhook: GithubWebhookNode,
+  aiReview: AiReviewNode,
+  securityScan: SecurityNode,
+  action: ActionNode,
+};
+
+type WorkflowStep = {
+  id: string;
+  name: string;
+  type: string;
+  function: string; // e.g. "github.pullRequestOpened"
+  status: "draft" | "ready" | "running" | "completed" | "failed";
+};
+
+type WorkflowDefinition = {
+  name: string;
+  status: "draft" | "active" | "disabled";
+  steps: WorkflowStep[];
+};
 
 type WorkflowGraph = {
   nodes: Node[];
   edges: Edge[];
+  workflow: WorkflowDefinition;
 };
 
 type ConnectedRepo = {
@@ -37,7 +61,7 @@ type CanvasProps = {
 const initialNodes: Node[] = [
   {
     id: "1",
-    data: { label: "Start: PR Opened", nodeType: "pr_opened" },
+    data: { label: "Start creating workFlow", nodeType: "test" },
     position: { x: 0, y: 100 },
     type: "default",
   },
@@ -45,9 +69,13 @@ const initialNodes: Node[] = [
 
 const initialEdges: Edge[] = [];
 
+// ─────────────────────────────────────────────
+// Main Canvas Component
+// ─────────────────────────────────────────────
 export default function Canvas({ selectedRepoId }: CanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useRef<any>(null);
+
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -55,11 +83,14 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoadingWorkflow, setIsLoadingWorkflow] = useState(false);
   const [isFlowReady, setIsFlowReady] = useState(false);
+
+  // Called by ReactFlow once it's mounted and ready
   const onInit = useCallback((instance: any) => {
     reactFlowInstance.current = instance;
     setIsFlowReady(true);
   }, []);
 
+  // ─── Load workflow whenever the selected repo changes ───
   useEffect(() => {
     if (selectedRepoId === undefined) {
       setNodes([]);
@@ -84,15 +115,16 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
         }
 
         const data = await response.json();
-        const workflow = data.workflow || { nodes: [], edges: [] };
+        // Backend stores the graph separately now (inside data.graph)
+        const graph = data.graph || { nodes: [], edges: [] };
 
-        if (workflow.nodes?.length > 0) {
-          setNodes(workflow.nodes);
+        if (graph.nodes?.length > 0) {
+          setNodes(graph.nodes);
         } else {
           setNodes(initialNodes);
         }
 
-        setEdges(workflow.edges || []);
+        setEdges(graph.edges || []);
       } catch (error) {
         console.error("Load workflow error", error);
         setNodes(initialNodes);
@@ -106,13 +138,78 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     loadWorkflow();
   }, [selectedRepoId, setEdges, setNodes]);
 
+  // Auto-fit the view whenever nodes load
   useEffect(() => {
     if (!reactFlowInstance.current || !isFlowReady || nodes.length === 0)
       return;
     reactFlowInstance.current.fitView({ padding: 0.2 });
   }, [nodes, isFlowReady]);
 
-  // Handle connections between nodes
+  // ─── Helpers ───────────────────────────────
+
+  // Maps a node's logical type → the ReactFlow component to render
+  const getNodeType = (type: string) => {
+    switch (type) {
+      case "pr_opened":
+      case "pr_updated":
+      case "manual_trigger":
+      case "scheduled":
+        return "githubWebhook";
+
+      case "code_review":
+        return "aiReview";
+
+      case "security_scan":
+      case "performance_review":
+        return "securityScan";
+
+      case "post_comment":
+      case "approve_pr":
+      case "slack_notify":
+        return "action";
+
+      default:
+        return "action";
+    }
+  };
+
+  const formatNodeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      pr_opened: "PR Opened",
+      pr_updated: "PR Updated",
+      manual_trigger: "Manual Trigger",
+      scheduled: "Scheduled",
+      code_review: "AI Code Review",
+      security_scan: "Security Scan",
+      performance_review: "Performance Review",
+      post_comment: "Post Comment",
+      approve_pr: "Approve PR",
+      slack_notify: "Slack Notify",
+    };
+    return labels[type] || type;
+  };
+
+  const getWorkflowFunction = (type: string): string => {
+    const functions: Record<string, string> = {
+      // Triggers
+      pr_opened: "github.pullRequestOpened",
+      pr_updated: "github.pullRequestUpdated",
+      manual_trigger: "workflow.manualTrigger",
+      scheduled: "workflow.scheduled",
+
+      // AI actions
+      code_review: "ai.reviewPullRequest",
+      security_scan: "ai.securityScan",
+      performance_review: "ai.performanceReview",
+
+      // GitHub actions
+      post_comment: "github.commentPullRequest",
+      approve_pr: "github.approvePullRequest",
+      slack_notify: "notification.slack",
+    };
+    return functions[type] || "workflow.unknown";
+  };
+
   const onConnect = useCallback(
     (params: Connection) => {
       setEdges((eds) =>
@@ -130,16 +227,12 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     [setEdges],
   );
 
-  // Handle drop event on canvas
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
 
       const type = event.dataTransfer.getData("application/reactflow");
-
-      if (!type) {
-        return;
-      }
+      if (!type) return;
 
       if (reactFlowInstance.current) {
         const position = reactFlowInstance.current.screenToFlowPosition({
@@ -149,11 +242,17 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
 
         const newNode: Node = {
           id: `node-${Date.now()}`,
-          type: "default",
+          type: getNodeType(type),
           position,
           data: {
-            label: `Node: ${type}`,
+            label: formatNodeLabel(type),
             nodeType: type,
+            event: type,
+            action: type,
+            workflow: {
+              function: getWorkflowFunction(type), // e.g. "ai.reviewPullRequest"
+              status: "ready", // starts as ready, changes during run
+            },
           },
         };
 
@@ -162,23 +261,23 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     },
     [setNodes],
   );
+  console.log("nodes:", nodes);
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-  // Handle node click to select
+  // ─── Node selection ──────────────────────────
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
   }, []);
 
-  // Handle canvas click to deselect
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
   }, []);
 
-  // Delete selected node
+  // ─── Inspector actions ───────────────────────
   const handleDeleteNode = useCallback(() => {
     if (selectedNode) {
       setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
@@ -192,7 +291,6 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     }
   }, [selectedNode, setNodes, setEdges]);
 
-  // Duplicate selected node
   const handleDuplicateNode = useCallback(() => {
     if (selectedNode) {
       const newNode: Node = {
@@ -208,26 +306,80 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     }
   }, [selectedNode, setNodes]);
 
-  // Run workflow simulation
-  const handleRunWorkflow = useCallback(async () => {
-    if (nodes.length === 0) return;
-
-    setIsRunning(true);
-    // Simulate workflow execution
-    for (let i = 0; i < nodes.length; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-    }
-    setIsRunning(false);
-  }, [nodes]);
-
-  // Clear all
   const handleClearAll = useCallback(() => {
     setNodes([]);
     setEdges([]);
     setSelectedNode(null);
   }, [setNodes, setEdges]);
 
-  // Save workflow
+  // ─── Generate the workflow definition ───────
+  // Walks through all current nodes and builds the WorkflowDefinition
+  // object that gets sent to the backend — separate from the visual graph
+  const generateWorkflow = useCallback((): WorkflowDefinition => {
+    const steps: WorkflowStep[] = nodes.map((node) => ({
+      id: node.id,
+      name: node.data.label,
+      type: node.data.nodeType,
+      function: node.data.workflow?.function || "workflow.unknown",
+      status: node.data.workflow?.status || "draft",
+    }));
+
+    return {
+      name: "AI PR Automation Workflow",
+      status: "active",
+      steps,
+    };
+  }, [nodes]);
+
+  const handleRunWorkflow = useCallback(async () => {
+    if (nodes.length === 0) return;
+
+    setIsRunning(true);
+
+    for (const node of nodes) {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== node.id) return n;
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              workflow: {
+                ...n.data.workflow,
+                status: "running",
+              },
+            },
+          };
+        }),
+      );
+
+      // Wait 1 second to simulate work
+      await new Promise((r) => setTimeout(r, 1000));
+
+      // Mark as "completed"
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== node.id) return n;
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              workflow: {
+                ...n.data.workflow,
+                status: "completed",
+              },
+            },
+          };
+        }),
+      );
+    }
+
+    setIsRunning(false);
+  }, [nodes, setNodes]);
+
+  // ─── Save Workflow ───────────────────────────
+  // Sends BOTH the visual graph (nodes/edges) AND the executable
+  // workflow definition to the backend in one request
   const handleSave = useCallback(async () => {
     if (selectedRepoId === undefined) {
       setSaveStatus("Select a repository first");
@@ -246,8 +398,13 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
         },
         body: JSON.stringify({
           repoId: selectedRepoId,
-          nodes,
-          edges,
+          // The executable workflow steps (what the backend actually runs)
+          workflow: generateWorkflow(),
+          // The visual graph (what ReactFlow renders)
+          graph: {
+            nodes,
+            edges,
+          },
         }),
       });
 
@@ -262,10 +419,14 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
       setSaveStatus("Save failed");
       setTimeout(() => setSaveStatus(null), 2500);
     }
-  }, [edges, nodes, selectedRepoId]);
+  }, [edges, nodes, selectedRepoId, generateWorkflow]);
 
+  // ─────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────
   return (
     <div className="flex h-full w-full gap-3 bg-gray-100 p-3">
+      {/* Left Sidebar — Node Library */}
       <div className="flex w-80 flex-col gap-4">
         {selectedRepoId ? (
           <NodeSidebar />
@@ -285,7 +446,7 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
       {/* Main Canvas */}
       <div
         ref={reactFlowWrapper}
-        className="flex min-h-0 w-[50vw] bg-white rounded-2xl border border-gray-200 overflow-hidden  flex-col shadow-sm"
+        className="flex min-h-0 w-[50vw] bg-white rounded-2xl border border-gray-200 overflow-hidden flex-col shadow-sm"
       >
         {!selectedRepoId ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center text-slate-600">
@@ -353,7 +514,7 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
                 fitViewOptions={{ padding: 0.2 }}
                 minZoom={0.25}
                 maxZoom={1.5}
-                style={{ width: "100%", height: "100%", border: "20px" }}
+                style={{ width: "100%", height: "100%" }}
               >
                 <Background color="#aaa" gap={16} />
                 <Controls />

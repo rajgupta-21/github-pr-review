@@ -27,8 +27,32 @@ router.get("/workflow", authMiddleware, async (req: any, res) => {
       return res.status(404).json({ message: "Workflow repo not found" });
     }
 
+    const workflow = connectedRepo.workflow || {
+      nodes: [],
+      edges: [],
+    };
+
+    const updatedNodes = workflow.nodes.map((node: any) => ({
+      ...node,
+
+      type:
+        node.data.nodeType === "pr_opened" ||
+        node.data.nodeType === "pr_updated" ||
+        node.data.nodeType === "manual_trigger" ||
+        node.data.nodeType === "scheduled"
+          ? "githubWebhook"
+          : node.data.nodeType === "code_review"
+            ? "aiReview"
+            : node.data.nodeType === "security_scan"
+              ? "securityScan"
+              : "action",
+    }));
+
     res.status(200).json({
-      workflow: connectedRepo.workflow || { nodes: [], edges: [] },
+      workflow: {
+        nodes: updatedNodes,
+        edges: workflow.edges,
+      },
     });
   } catch (error) {
     console.error(error);

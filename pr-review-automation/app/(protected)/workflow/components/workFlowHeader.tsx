@@ -3,7 +3,6 @@ import {
   CheckCircle,
   ChevronRight,
   Play,
-  Save,
   Settings,
 } from "lucide-react";
 
@@ -42,11 +41,6 @@ const WorkFlowHeader = () => {
         <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
           <Play size={16} />
           Test Workflow
-        </button>
-
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#390de7] text-white rounded-xl hover:opacity-90 transition cursor-pointer">
-          <Save size={16} />
-          Save
         </button>
 
         <button className="p-2 rounded-xl cursor-pointer transition">

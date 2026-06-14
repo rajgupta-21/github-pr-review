@@ -87,7 +87,7 @@ const WorkflowPage = () => {
   };
 
   return (
-    <div className="w-full min-h-screen overflow-hidden p-4">
+    <div className="w-[80vw] min-h-screen overflow-hidden p-4">
       <div className="space-y-4">
         <WorkFlowHeader />
         <div className="flex flex-col">

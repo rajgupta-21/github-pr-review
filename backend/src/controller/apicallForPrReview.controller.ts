@@ -5,8 +5,6 @@ import { generatePRReview } from "../utils/genrateResponse";
 
 export async function AiReviewForPR(req: Request, res: Response) {
   try {
-    console.log(req.body);
-
     const { userId, owner, repoName, pr_Number, context } = req.body;
 
     if (!userId || !owner || !repoName || !pr_Number) {

@@ -444,7 +444,6 @@ const PrDetails = () => {
       const data = await response.json();
       setLoading(false);
       setAiReviewResponse(data);
-      console.log(data);
     } catch (error) {
       setError(true);
       console.error(error);
@@ -472,7 +471,6 @@ const PrDetails = () => {
       const data = await response.json();
       setLoading(false);
       setAiReviewResponse(data);
-      console.log(data);
     } catch (error) {
       setError(true);
       console.error(error);
