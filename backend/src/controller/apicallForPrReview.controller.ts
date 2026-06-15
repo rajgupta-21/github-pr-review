@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { UserModel } from "../schema/user.schema";
 import { getOctokit } from "../services/octokit.service";
-import { generatePRReview } from "../utils/genrateResponse";
+import { runAIReview } from "../services/prContext.service";
 
 export async function AiReviewForPR(req: Request, res: Response) {
   try {
@@ -23,7 +23,7 @@ export async function AiReviewForPR(req: Request, res: Response) {
       });
     }
 
-    const octokit = getOctokit(getUser.githubAccessToken);
+    const octokit = getOctokit(getUser.githubAccessToken!);
 
     if (!octokit) {
       return res.status(401).json({
@@ -41,37 +41,22 @@ export async function AiReviewForPR(req: Request, res: Response) {
       });
     }
 
-    const pullRequest = await octokit.rest.pulls.get({
-      owner,
-      repo: repoName,
-      pull_number: pullNumber,
-    });
-
-    const files = await octokit.rest.pulls.listFiles({
-      owner,
-      repo: repoName,
-      pull_number: pullNumber,
-    });
-
-    const reviewPayload = {
-      title: pullRequest.data.title,
-      description: pullRequest.data.body,
-
-      files: files.data
-        .filter((file) => file.patch)
-        .map((file) => ({
-          filename: file.filename,
-          status: file.status,
-          patch: file.patch,
-        })),
-    };
-
-    const aiReview = await generatePRReview(reviewPayload, context);
+    const review = await runAIReview(
+      {
+        userId: String(userId),
+        owner,
+        repo: repoName,
+        repoId: 0,
+        prNumber: pullNumber,
+        octokit,
+      },
+      context,
+    );
 
     return res.status(200).json({
       message: "AI review generated successfully",
       action: "success",
-      review: JSON.parse(aiReview || "{}"),
+      review,
     });
   } catch (error) {
     console.error("AI Review Error:", error);

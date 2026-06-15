@@ -19,24 +19,24 @@ const nodes = [
     items: [
       { type: "pr_opened", label: "PR Opened", icon: GitPullRequest },
       { type: "pr_updated", label: "PR Updated", icon: RefreshCw },
-      { type: "manual", label: "Manual Trigger", icon: Play },
-      { type: "cron", label: "Scheduled", icon: Clock },
+      { type: "manual_trigger", label: "Manual Trigger", icon: Play },
+      { type: "scheduled", label: "Scheduled", icon: Clock },
     ],
   },
   {
     category: "AI Review",
     items: [
       { type: "code_review", label: "Code Review", icon: Bot },
-      { type: "security", label: "Security Scan", icon: Shield },
-      { type: "performance", label: "Performance Review", icon: Zap },
+      { type: "security_scan", label: "Security Scan", icon: Shield },
+      { type: "performance_review", label: "Performance Review", icon: Zap },
     ],
   },
   {
     category: "Actions",
     items: [
-      { type: "comment", label: "Post Comment", icon: MessageSquare },
-      { type: "approve", label: "Approve PR", icon: CheckCircle2 },
-      { type: "slack", label: "Slack Notify", icon: Bell },
+      { type: "post_comment", label: "Post Comment", icon: MessageSquare },
+      { type: "approve_pr", label: "Approve PR", icon: CheckCircle2 },
+      { type: "slack_notify", label: "Slack Notify", icon: Bell },
     ],
   },
 ];

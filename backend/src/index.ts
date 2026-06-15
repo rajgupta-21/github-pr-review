@@ -13,6 +13,7 @@ import fetchFilesChanged from "./routes/fetchFilesChanged.route";
 import fectchPrByNumber from "./routes/fetchPrByNumber.route";
 import fecthPRRepoRoute from "./routes/fetchPrForRepo.route";
 import githubRoute from "./routes/github.route";
+import githubWebhookRoute from "./routes/githubWebhook.route";
 import LoginRoute from "./routes/login.route";
 import logoutRoute from "./routes/logout.route";
 import RegisterRoute from "./routes/register.route";
@@ -28,6 +29,14 @@ if (!PORT) {
   console.log("PORT is missing in the env ");
   process.exit(0);
 }
+
+// GitHub webhooks need the raw body for signature verification
+app.use(
+  "/webhooks/github",
+  express.raw({ type: "application/json" }),
+  githubWebhookRoute,
+);
+
 app.use(express.json());
 app.use(cookieParser());
 

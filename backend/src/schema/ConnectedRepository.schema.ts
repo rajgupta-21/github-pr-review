@@ -37,6 +37,9 @@ const ConnectRepoSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    webhookId: {
+      type: Number,
+    },
     visibility: {
       type: String,
       enum: ["private", "public"],
@@ -57,6 +60,18 @@ const ConnectRepoSchema = new mongoose.Schema(
       edges: {
         type: [mongoose.Schema.Types.Mixed],
         default: [],
+      },
+      definition: {
+        name: { type: String, default: "AI PR Automation Workflow" },
+        status: {
+          type: String,
+          enum: ["draft", "active", "disabled"],
+          default: "active",
+        },
+        steps: {
+          type: [mongoose.Schema.Types.Mixed],
+          default: [],
+        },
       },
       updatedAt: {
         type: Date,

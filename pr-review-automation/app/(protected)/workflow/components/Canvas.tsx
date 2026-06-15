@@ -13,8 +13,19 @@ import ReactFlow, {
   useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import ExecutionPanel, {
+  type ExecutionResult,
+  type ExecutionStep,
+} from "./ExecutionPanel";
 import Inspector from "./Inspector";
 import NodeSidebar from "./NodeSidebar";
+import {
+  buildPlannedSteps,
+  getRunnableEdges,
+  getRunnableNodes,
+  isTriggerFunction,
+  mapStepToNodeStatus,
+} from "./workflowGraph";
 import ActionNode from "./nodes/actionNode";
 import AiReviewNode from "./nodes/aiReviewNode";
 import GithubWebhookNode from "./nodes/githubWebhookNode";
@@ -27,12 +38,131 @@ const nodeTypes = {
   action: ActionNode,
 };
 
+const NODE_TYPE_ALIASES: Record<string, string> = {
+  manual: "manual_trigger",
+  cron: "scheduled",
+  security: "security_scan",
+  performance: "performance_review",
+  comment: "post_comment",
+  approve: "approve_pr",
+  slack: "slack_notify",
+};
+
+const normalizeNodeType = (type: string) => NODE_TYPE_ALIASES[type] || type;
+
+const getNodeType = (type: string) => {
+  const normalized = normalizeNodeType(type);
+  switch (normalized) {
+    case "pr_opened":
+    case "pr_updated":
+    case "manual_trigger":
+    case "scheduled":
+      return "githubWebhook";
+
+    case "code_review":
+      return "aiReview";
+
+    case "security_scan":
+    case "performance_review":
+      return "securityScan";
+
+    case "post_comment":
+    case "approve_pr":
+    case "slack_notify":
+      return "action";
+
+    default:
+      return "action";
+  }
+};
+
+const formatNodeLabel = (type: string) => {
+  const normalized = normalizeNodeType(type);
+  const labels: Record<string, string> = {
+    pr_opened: "PR Opened",
+    pr_updated: "PR Updated",
+    manual_trigger: "Manual Trigger",
+    scheduled: "Scheduled",
+    code_review: "AI Code Review",
+    security_scan: "Security Scan",
+    performance_review: "Performance Review",
+    post_comment: "Post Comment",
+    approve_pr: "Approve PR",
+    slack_notify: "Slack Notify",
+  };
+  return labels[normalized] || normalized;
+};
+
+const getWorkflowFunction = (type: string): string => {
+  const normalized = normalizeNodeType(type);
+  const functions: Record<string, string> = {
+    pr_opened: "github.pullRequestOpened",
+    pr_updated: "github.pullRequestUpdated",
+    manual_trigger: "workflow.manualTrigger",
+    scheduled: "workflow.scheduled",
+    code_review: "ai.reviewPullRequest",
+    security_scan: "ai.securityScan",
+    performance_review: "ai.performanceReview",
+    post_comment: "github.commentPullRequest",
+    approve_pr: "github.approvePullRequest",
+    slack_notify: "notification.slack",
+  };
+  return functions[normalized] || "workflow.unknown";
+};
+
+const DEFAULT_NODE_CONFIG: Record<string, Record<string, string | number | boolean>> = {
+  code_review: { model: "llama-3.3-70b-versatile", focusInstructions: "" },
+  security_scan: { minSeverity: "high", focusInstructions: "" },
+  performance_review: { focusInstructions: "" },
+  scheduled: { cron: "" },
+  pr_opened: { targetBranch: "" },
+  post_comment: { includeFindings: true, includeScores: true },
+  approve_pr: { onlyIfRecommended: true },
+  slack_notify: { channel: "#pr-reviews", mentionAuthor: false },
+};
+
+const getDefaultNodeConfig = (type: string) => {
+  const normalized = normalizeNodeType(type);
+  return { ...(DEFAULT_NODE_CONFIG[normalized] || {}) };
+};
+
+const isKnownNodeType = (
+  type: string | undefined,
+): type is keyof typeof nodeTypes => !!type && type in nodeTypes;
+
+const normalizeLoadedNode = (node: Node): Node => {
+  const nodeType = (node.data?.nodeType as string) || "action";
+  const reactFlowType = isKnownNodeType(node.type)
+    ? node.type
+    : getNodeType(nodeType);
+
+  return {
+    ...node,
+    id: String(node.id),
+    type: reactFlowType,
+    position: node.position ?? { x: 0, y: 0 },
+    data: {
+      ...node.data,
+      label: node.data?.label || formatNodeLabel(nodeType),
+      nodeType,
+      event: node.data?.event ?? nodeType,
+      action: node.data?.action ?? nodeType,
+      repoName: node.data?.repoName ?? "",
+      workflow: node.data?.workflow ?? {
+        function: getWorkflowFunction(nodeType),
+        status: "ready",
+      },
+      config: node.data?.config ?? getDefaultNodeConfig(nodeType),
+    },
+  };
+};
+
 type WorkflowStep = {
   id: string;
   name: string;
   type: string;
-  function: string; // e.g. "github.pullRequestOpened"
-  status: "draft" | "ready" | "running" | "completed" | "failed";
+  function: string;
+  status: "draft" | "ready" | "running" | "completed" | "failed" | "pending";
 };
 
 type WorkflowDefinition = {
@@ -54,10 +184,6 @@ type ConnectedRepo = {
   workflow?: WorkflowGraph;
 };
 
-type CanvasProps = {
-  selectedRepoId?: number;
-};
-
 const initialNodes: Node[] = [
   {
     id: "1",
@@ -72,7 +198,7 @@ const initialEdges: Edge[] = [];
 // ─────────────────────────────────────────────
 // Main Canvas Component
 // ─────────────────────────────────────────────
-export default function Canvas({ selectedRepoId }: CanvasProps) {
+export default function Canvas({ selectedRepoId }) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useRef<any>(null);
 
@@ -83,6 +209,36 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoadingWorkflow, setIsLoadingWorkflow] = useState(false);
   const [isFlowReady, setIsFlowReady] = useState(false);
+  const [prNumber, setPrNumber] = useState("");
+  const [runStatus, setRunStatus] = useState<string | null>(null);
+  const [executionPanelOpen, setExecutionPanelOpen] = useState(false);
+  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(
+    null,
+  );
+  const [plannedSteps, setPlannedSteps] = useState<ExecutionStep[]>([]);
+
+  const applyNodeStatuses = useCallback(
+    (updates: Array<{ nodeId: string; status: string }>) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          const update = updates.find((item) => item.nodeId === node.id);
+          if (!update) return node;
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              workflow: {
+                ...node.data.workflow,
+                status: mapStepToNodeStatus(update.status),
+              },
+            },
+          };
+        }),
+      );
+    },
+    [setNodes],
+  );
 
   // Called by ReactFlow once it's mounted and ready
   const onInit = useCallback((instance: any) => {
@@ -115,16 +271,20 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
         }
 
         const data = await response.json();
-        // Backend stores the graph separately now (inside data.graph)
-        const graph = data.graph || { nodes: [], edges: [] };
+        const graph = data.workflow || { nodes: [], edges: [] };
+        const loadedNodes = (graph.nodes || []).map(normalizeLoadedNode);
 
-        if (graph.nodes?.length > 0) {
-          setNodes(graph.nodes);
+        if (loadedNodes.length > 0) {
+          setNodes(loadedNodes);
         } else {
           setNodes(initialNodes);
         }
 
         setEdges(graph.edges || []);
+
+        requestAnimationFrame(() => {
+          reactFlowInstance.current?.fitView({ padding: 0.2 });
+        });
       } catch (error) {
         console.error("Load workflow error", error);
         setNodes(initialNodes);
@@ -147,69 +307,6 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
 
   // ─── Helpers ───────────────────────────────
 
-  // Maps a node's logical type → the ReactFlow component to render
-  const getNodeType = (type: string) => {
-    switch (type) {
-      case "pr_opened":
-      case "pr_updated":
-      case "manual_trigger":
-      case "scheduled":
-        return "githubWebhook";
-
-      case "code_review":
-        return "aiReview";
-
-      case "security_scan":
-      case "performance_review":
-        return "securityScan";
-
-      case "post_comment":
-      case "approve_pr":
-      case "slack_notify":
-        return "action";
-
-      default:
-        return "action";
-    }
-  };
-
-  const formatNodeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      pr_opened: "PR Opened",
-      pr_updated: "PR Updated",
-      manual_trigger: "Manual Trigger",
-      scheduled: "Scheduled",
-      code_review: "AI Code Review",
-      security_scan: "Security Scan",
-      performance_review: "Performance Review",
-      post_comment: "Post Comment",
-      approve_pr: "Approve PR",
-      slack_notify: "Slack Notify",
-    };
-    return labels[type] || type;
-  };
-
-  const getWorkflowFunction = (type: string): string => {
-    const functions: Record<string, string> = {
-      // Triggers
-      pr_opened: "github.pullRequestOpened",
-      pr_updated: "github.pullRequestUpdated",
-      manual_trigger: "workflow.manualTrigger",
-      scheduled: "workflow.scheduled",
-
-      // AI actions
-      code_review: "ai.reviewPullRequest",
-      security_scan: "ai.securityScan",
-      performance_review: "ai.performanceReview",
-
-      // GitHub actions
-      post_comment: "github.commentPullRequest",
-      approve_pr: "github.approvePullRequest",
-      slack_notify: "notification.slack",
-    };
-    return functions[type] || "workflow.unknown";
-  };
-
   const onConnect = useCallback(
     (params: Connection) => {
       setEdges((eds) =>
@@ -231,8 +328,10 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
 
-      const type = event.dataTransfer.getData("application/reactflow");
-      if (!type) return;
+      const rawType = event.dataTransfer.getData("application/reactflow");
+      if (!rawType) return;
+
+      const type = normalizeNodeType(rawType);
 
       if (reactFlowInstance.current) {
         const position = reactFlowInstance.current.screenToFlowPosition({
@@ -249,9 +348,10 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
             nodeType: type,
             event: type,
             action: type,
+            config: getDefaultNodeConfig(type),
             workflow: {
-              function: getWorkflowFunction(type), // e.g. "ai.reviewPullRequest"
-              status: "ready", // starts as ready, changes during run
+              function: getWorkflowFunction(type),
+              status: "ready",
             },
           },
         };
@@ -261,7 +361,6 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     },
     [setNodes],
   );
-  console.log("nodes:", nodes);
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -276,6 +375,55 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
   }, []);
+
+  const handleUpdateNode = useCallback(
+    (
+      nodeId: string,
+      updates: {
+        label?: string;
+        config?: Record<string, string | number | boolean>;
+        workflow?: { function?: string; status?: string };
+      },
+    ) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id !== nodeId) return node;
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              ...updates,
+              config: updates.config
+                ? { ...node.data.config, ...updates.config }
+                : node.data.config,
+              workflow: updates.workflow
+                ? { ...node.data.workflow, ...updates.workflow }
+                : node.data.workflow,
+            },
+          };
+        }),
+      );
+
+      setSelectedNode((prev) => {
+        if (!prev || prev.id !== nodeId) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            ...updates,
+            config: updates.config
+              ? { ...prev.data.config, ...updates.config }
+              : prev.data.config,
+            workflow: updates.workflow
+              ? { ...prev.data.workflow, ...updates.workflow }
+              : prev.data.workflow,
+          },
+        };
+      });
+    },
+    [setNodes],
+  );
 
   // ─── Inspector actions ───────────────────────
   const handleDeleteNode = useCallback(() => {
@@ -316,7 +464,8 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
   // Walks through all current nodes and builds the WorkflowDefinition
   // object that gets sent to the backend — separate from the visual graph
   const generateWorkflow = useCallback((): WorkflowDefinition => {
-    const steps: WorkflowStep[] = nodes.map((node) => ({
+    const runnableNodes = getRunnableNodes(nodes);
+    const steps: WorkflowStep[] = runnableNodes.map((node) => ({
       id: node.id,
       name: node.data.label,
       type: node.data.nodeType,
@@ -331,51 +480,132 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
     };
   }, [nodes]);
 
+  const getWorkflowPayload = useCallback(() => {
+    const runnableNodes = getRunnableNodes(nodes);
+    const runnableEdges = getRunnableEdges(nodes, edges);
+    return { runnableNodes, runnableEdges };
+  }, [nodes, edges]);
+
   const handleRunWorkflow = useCallback(async () => {
-    if (nodes.length === 0) return;
+    if (nodes.length === 0 || selectedRepoId === undefined) return;
 
-    setIsRunning(true);
-
-    for (const node of nodes) {
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== node.id) return n;
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              workflow: {
-                ...n.data.workflow,
-                status: "running",
-              },
-            },
-          };
-        }),
-      );
-
-      // Wait 1 second to simulate work
-      await new Promise((r) => setTimeout(r, 1000));
-
-      // Mark as "completed"
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== node.id) return n;
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              workflow: {
-                ...n.data.workflow,
-                status: "completed",
-              },
-            },
-          };
-        }),
-      );
+    const parsedPrNumber = Number(prNumber);
+    if (!prNumber || Number.isNaN(parsedPrNumber) || parsedPrNumber < 1) {
+      setRunStatus("Enter a valid PR number to run the workflow");
+      setTimeout(() => setRunStatus(null), 3000);
+      return;
     }
 
-    setIsRunning(false);
-  }, [nodes, setNodes]);
+    const { runnableNodes, runnableEdges } = getWorkflowPayload();
+
+    if (runnableNodes.length === 0) {
+      setRunStatus("Add workflow nodes — the placeholder node cannot be executed");
+      setTimeout(() => setRunStatus(null), 3000);
+      return;
+    }
+
+    const planned = buildPlannedSteps(nodes, edges).map((step) => ({
+      ...step,
+      status: "pending" as const,
+    }));
+
+    setPlannedSteps(planned);
+    setExecutionResult(null);
+    setExecutionPanelOpen(true);
+    setIsRunning(true);
+    setRunStatus(null);
+
+    applyNodeStatuses(
+      planned.map((step) => ({ nodeId: step.nodeId, status: "pending" })),
+    );
+
+    const firstActive = planned.find((step) => !isTriggerFunction(step.function));
+    if (firstActive) {
+      applyNodeStatuses([{ nodeId: firstActive.nodeId, status: "running" }]);
+    }
+
+    try {
+      await fetch("http://localhost:4000/user/workflow", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          repoId: Number(selectedRepoId),
+          workflow: generateWorkflow(),
+          nodes: runnableNodes,
+          edges: runnableEdges,
+        }),
+      });
+
+      const response = await fetch(
+        "http://localhost:4000/user/workflow/execute",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            repoId: Number(selectedRepoId),
+            prNumber: parsedPrNumber,
+            trigger: "manual_trigger",
+            nodes: runnableNodes,
+            edges: runnableEdges,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Workflow execution failed");
+      }
+
+      const data = await response.json();
+      const result = data.result as ExecutionResult;
+
+      setExecutionResult({
+        ...result,
+        prNumber: parsedPrNumber,
+        review: result.review
+          ? {
+              summary: result.review.summary,
+              overallScore: result.review.overallScore,
+              recommendation: result.review.recommendation,
+              findings: result.review.findings?.slice(0, 5),
+            }
+          : undefined,
+      });
+
+      const stepResults = result.steps || [];
+      applyNodeStatuses(
+        stepResults.map((step) => ({
+          nodeId: step.nodeId,
+          status: step.status,
+        })),
+      );
+    } catch (error) {
+      console.error("Run workflow error", error);
+      setExecutionResult({
+        status: "failed",
+        prNumber: parsedPrNumber,
+        steps: planned.map((step) =>
+          step.status === "pending" && !isTriggerFunction(step.function)
+            ? { ...step, status: "failed" as const, error: "Execution interrupted" }
+            : step,
+        ),
+        message:
+          error instanceof Error ? error.message : "Workflow execution failed",
+      });
+    } finally {
+      setIsRunning(false);
+      setPlannedSteps([]);
+    }
+  }, [
+    applyNodeStatuses,
+    generateWorkflow,
+    getWorkflowPayload,
+    nodes,
+    prNumber,
+    selectedRepoId,
+  ]);
 
   // ─── Save Workflow ───────────────────────────
   // Sends BOTH the visual graph (nodes/edges) AND the executable
@@ -389,6 +619,8 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
 
     setSaveStatus("Saving...");
 
+    const { runnableNodes, runnableEdges } = getWorkflowPayload();
+
     try {
       const response = await fetch("http://localhost:4000/user/workflow", {
         method: "POST",
@@ -397,14 +629,10 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          repoId: selectedRepoId,
-          // The executable workflow steps (what the backend actually runs)
+          repoId: Number(selectedRepoId),
           workflow: generateWorkflow(),
-          // The visual graph (what ReactFlow renders)
-          graph: {
-            nodes,
-            edges,
-          },
+          nodes: runnableNodes,
+          edges: runnableEdges,
         }),
       });
 
@@ -412,14 +640,20 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
         throw new Error("Failed to save workflow");
       }
 
+      const data = await response.json();
+
       setSaveStatus("Saved successfully");
+      if (data.webhookActive) {
+        setRunStatus("Saved — GitHub webhook active for PR events");
+        setTimeout(() => setRunStatus(null), 4000);
+      }
       setTimeout(() => setSaveStatus(null), 2500);
     } catch (error) {
       console.error("Save workflow error", error);
       setSaveStatus("Save failed");
       setTimeout(() => setSaveStatus(null), 2500);
     }
-  }, [edges, nodes, selectedRepoId, generateWorkflow]);
+  }, [edges, generateWorkflow, getWorkflowPayload, nodes, selectedRepoId]);
 
   // ─────────────────────────────────────────────
   // Render
@@ -446,7 +680,7 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
       {/* Main Canvas */}
       <div
         ref={reactFlowWrapper}
-        className="flex min-h-0 w-[50vw] bg-white rounded-2xl border border-gray-200 overflow-hidden flex-col shadow-sm"
+        className="flex min-h-[600px] w-[50vw] bg-white rounded-2xl border border-gray-200 overflow-hidden flex-col shadow-sm"
       >
         {!selectedRepoId ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center text-slate-600">
@@ -468,6 +702,15 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
                 Workflow Builder
               </h1>
               <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  value={prNumber}
+                  onChange={(e) => setPrNumber(e.target.value)}
+                  placeholder="PR #"
+                  className="w-20 rounded-lg border border-gray-200 px-2 py-2 text-sm"
+                  title="Pull request number for manual run"
+                />
                 <button
                   onClick={handleClearAll}
                   className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -494,10 +737,18 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
               {saveStatus ? (
                 <div className="text-sm text-gray-500 pl-2">{saveStatus}</div>
               ) : null}
+              {runStatus ? (
+                <div className="text-sm text-purple-600 pl-2">{runStatus}</div>
+              ) : null}
             </div>
 
             {/* React Flow Canvas */}
-            <div className="flex-1 relative min-h-0">
+            <div className="flex-1 relative min-h-[500px]">
+              {isLoadingWorkflow ? (
+                <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+                  Loading workflow...
+                </div>
+              ) : null}
               <ReactFlow
                 onInit={onInit}
                 nodes={nodes}
@@ -524,13 +775,24 @@ export default function Canvas({ selectedRepoId }: CanvasProps) {
         )}
       </div>
 
-      {/* Right Inspector Panel */}
-      <Inspector
-        selectedNode={selectedNode}
-        onDeleteNode={handleDeleteNode}
-        onClose={() => setSelectedNode(null)}
-        onDuplicateNode={handleDuplicateNode}
-      />
+      {/* Right panel — execution results or node inspector */}
+      {executionPanelOpen ? (
+        <ExecutionPanel
+          isOpen={executionPanelOpen}
+          isRunning={isRunning}
+          result={executionResult}
+          plannedSteps={plannedSteps}
+          onClose={() => setExecutionPanelOpen(false)}
+        />
+      ) : (
+        <Inspector
+          selectedNode={selectedNode}
+          onDeleteNode={handleDeleteNode}
+          onClose={() => setSelectedNode(null)}
+          onDuplicateNode={handleDuplicateNode}
+          onUpdateNode={handleUpdateNode}
+        />
+      )}
     </div>
   );
 }
