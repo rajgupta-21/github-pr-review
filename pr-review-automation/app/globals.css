@@ -128,3 +128,8 @@
     @apply font-sans;
   }
 }
+
+
+.div {
+  background-color: red;
+}
