@@ -1,20 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
+  weight: ["500", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plex = IBM_Plex_Sans({
+  variable: "--font-plex",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const jetbrains = JetBrains_Mono({
+  variable: "--font-jetbrains",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "Github PR Automation",
-  description: "AI Powered PR Review Platform",
+  title: "Mergegate — AI pull request review",
+  description:
+    "Mergegate reviews every pull request for security, performance and quality, and holds the merge until a human has seen what matters.",
 };
 
 export default function RootLayout({
@@ -25,14 +34,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`
-        ${geistSans.variable}
-        ${geistMono.variable}
-        h-full
-        antialiased
-      `}
+      className={`${bricolage.variable} ${plex.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="min-h-screen font-mono ">{children}</body>
+      <body className="min-h-screen font-sans">{children}</body>
     </html>
   );
 }

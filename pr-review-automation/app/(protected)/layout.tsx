@@ -1,33 +1,28 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import SidebarForMain from "../components/sidebar";
-export default async function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+
+import { UserProvider } from "@/components/shell/user-context";
+import { API_BASE } from "@/lib/api";
+import type { MeResponse } from "@/lib/types";
+
+export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
   const token = cookieStore.get("token");
   if (!token) {
     redirect("/login");
   }
 
-  const response = await fetch("http://localhost:4000/auth/me", {
-    method: "GET",
-    headers: {
-      Cookie: `token=${token.value}`,
-    },
+  const response = await fetch(`${API_BASE}/auth/me`, {
+    headers: { Cookie: `token=${token.value}` },
     cache: "no-store",
-  });
+  }).catch(() => null);
 
-  if (!response.ok) {
+  if (!response?.ok) {
     redirect("/login");
   }
 
-  return (
-    <div className="min-h-screen bg-white text-black font-mono flex flex-col lg:flex-row">
-      <SidebarForMain />
-      <div className="flex p-4 w-full lg:p-10">{children}</div>
-    </div>
-  );
+  const { user } = (await response.json()) as MeResponse;
+
+  // Each page picks its own shell (sidebar, rail or top bar) — see components/shell.
+  return <UserProvider user={user}>{children}</UserProvider>;
 }

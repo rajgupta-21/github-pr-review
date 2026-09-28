@@ -1,7 +1,10 @@
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <div className="w-screen h-screen">{children}</div>;
+import { BrandPanel } from "./_components/brand-panel";
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen bg-paper">
+      <BrandPanel />
+      {children}
+    </div>
+  );
 }

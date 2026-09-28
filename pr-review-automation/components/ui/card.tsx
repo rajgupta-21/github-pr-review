@@ -1,41 +1,48 @@
-import { LucideIcon } from "lucide-react";
-import React from "react";
+import * as React from "react";
 
-type CardItem = {
-  image: LucideIcon;
-  title: string;
-  content: string;
-};
+import { cn } from "@/lib/utils";
 
-type CardProps = {
-  cards: CardItem[];
-};
-
-const CardComps: React.FC<CardProps> = ({ cards }) => {
+/* White panel on paper: 16px radius, 1px warm line. */
+function Card({ className, ...props }: React.ComponentProps<"section">) {
   return (
-    <div className="flex flex-col gap-10">
-      {cards.map((card, index) => {
-        const Icon = card.image;
+    <section
+      data-slot="card"
+      className={cn("overflow-hidden rounded-xl border border-line bg-surface", className)}
+      {...props}
+    />
+  );
+}
 
-        return (
-          <div
-            key={index}
-            className="flex items-center gap-4 bg-white/50 p-2 rounded-lg border border-gray-200 "
-          >
-            <div className="p-3 rounded-xl bg-[#4017e3]/20">
-              <Icon size={24} className="text-[#4017e3]" />
-            </div>
-
-            <div className="flex flex-col">
-              <h2 className="font-bold text-md">{card.title}</h2>
-
-              <p className="text-xs text-gray-500">{card.content}</p>
-            </div>
-          </div>
-        );
-      })}
+/* Header row: 18px card heading on the left, a link or control on the right. */
+function CardHeader({
+  title,
+  action,
+  children,
+  className,
+}: {
+  title: React.ReactNode;
+  action?: React.ReactNode;
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between gap-3 border-b border-line-soft px-5 py-[18px]",
+        className,
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <h2 className="font-display text-lg font-bold text-fg">{title}</h2>
+        {children}
+      </div>
+      {action ? <div className="shrink-0 text-[13.5px] font-medium">{action}</div> : null}
     </div>
   );
-};
+}
 
-export default CardComps;
+function CardBody({ className, ...props }: React.ComponentProps<"div">) {
+  return <div className={cn("px-5 py-[18px]", className)} {...props} />;
+}
+
+export { Card, CardBody, CardHeader };
